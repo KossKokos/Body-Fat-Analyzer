@@ -1,0 +1,46 @@
+What I have followed: split → fit scaler on train → transform train/test → engineer features
+
+I used the base layers without regularisation and with simple relu activation. This wan't bad but far from good result. 
+
+I decided to add l2 regularisation for first and second layers. For all layers except last one I chose 'elu' activation to exclude dying neurons. I added 2 dropout layers to regularise weights even more. 
+
+After, results were better, however 20 epochs weren't enough for learning. I used 50 epochs to train model. I introduced 2 callbacks. First callback reduces learning rate by 0.2 if val_loss does not change after 3 epochs. Second callback is early stopping with patience of 20.
+
+it helped, I achieved ~ 2.4 error on the testing data but after I plotted the scatter plot, I saw that my model is bad with predicting high and low fat percentages. 
+
+I decided to sample my weights before training to include 'outliers'. I achieved 2.13% error on the test data. Model predicted high fat % better but low % still ignored. 
+
+Now, I will use tail-focused weighting technique. For low fat % is heavier penalty - 2.0, otherwise - np.abs(y_train - mean_val) + 0.5. 
+
+Previous did not help, even made it worse. So I will try to duplicate low fat % rows to boost its importance. It showed better results than previous weight sampling. I duplicated 150 records with low body fat %. mae: Model's MAE (fat % points): 2.333.
+
+I will increase samples to 300. It didn't help at all. Wrong assumption. 
+
+I added 150 samples and added heavier penalty for low fat %. Result MAE: 2.53. Results on the plot are worse for low fat % , low % body fat has bad predictions. But residuals are at equal length: +-10 for low and high fat %. This looks better than previous steps
+
+I keep duplicated 150 samples but removed sample_weights. Now, I tried to use custom loss function that penalise more if residuals are negative. This should help model learn more patterns for low fat %. I got result of MAE: 2.28. Residuals actually became less for low fat % data but higher for high fat %. 
+
+I will keep huber loss. I added 1 more 64 neurons layer with relu activation and l2(1e-4) regularisation with dropout(0.2). I do not like model's fit. Loss is not stable, it keep jumping up and down. For some reason, there is 1 outlier that predicts fat % of 3500. I added constraints for each layer and regularisation with dropout for last hidden layer. I successfully achieved overfitting, model is pure regression to the mean, I will use simplier nn structure. Like before.
+
+So, 3 hidden layers, each with constraint, l2(1e-4)  and dropout. Adam(1e-2) as start, callback with 0.2 factor and patience=4. MAE: 2.7. NN is still regression to the mean but better than previous.
+
+SECOND PART
+
+After unsuccessful attempts to implement regressor using all data, I chose the strategy. Now, I will use RandomForest classifier to predict 3 classes, low-fat, mid-fat and high-fat. I divided dataset into 3 groups with 33th and 66th quantiles. After, I will implement 3 regressors for each of the class. 
+
+Currently I have implemented low_regressor, I am using sample weights to make model pay more attention to very low-fat data. Structure is: Elu(64, l2(1e-4), max_norm(max_val) -> Tanh(32, max_norm(max_val) -> Gelu(64, l2(1e-3), max_norm(max_val) -> Softplus(32, l2(1e-4), max_norm(max_val) -> Elu(64, max_norm(max_val). It shows good results when predicting low-fat samples, that is what I need. 
+
+Now, time form mid_regressor.
+
+
+
+
+Plan:
+	* Implement Classifier
+	* Implement Low Regressor
+	* Implement Mid Regressor
+	* Implement High Regressor
+	
+	* Implement PostgreSQL structure  (user's input table)
+	* Implement FastAPI back_end logic (get_predictions, user's history, etc)
+	
