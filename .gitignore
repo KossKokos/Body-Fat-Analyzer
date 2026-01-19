@@ -1,3 +1,5 @@
 back_end/.venv
 back_end/datasets
 __pycache__/
+back_end/.env
+back_end/src
