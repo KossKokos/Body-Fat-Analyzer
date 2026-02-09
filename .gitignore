@@ -2,7 +2,33 @@ back_end/.venv
 back_end/datasets
 __pycache__/
 back_end/.env
-src
+/src
 pre_trained_instances
 history.csv
 datasets
+front_end/node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
