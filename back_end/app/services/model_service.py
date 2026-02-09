@@ -1,34 +1,53 @@
-# app/services/model_service.py
-import copy
 import pickle
-from typing import Dict, List, Tuple, Any
+from typing import Dict, Any
+from pathlib import Path
 
-import numpy as np
-import pandas as pd
+import keras
 
-from app.config.logger import logger
-from app.utils.logger import log_execution_time, LoggerMixin, log_function_call
-from app.config.settings import settings
 
+from ml.loading_script import quantile_loss_lower, quantile_loss_upper
+from utils.logger import log_execution_time, LoggerMixin
+from config.settings import settings
+
+# to inore messagesP
 
 class ModelService(LoggerMixin):
     """Service for managing ML models."""
     
     _instance = None
-    models: Dict[str, Any] = {}
-    features: List[str] = [ 
-        'calories_burned', 'max_bpm', 'age',
-        'weight', 'daily_meals_frequency', 'resting_bpm',
-        'bmi', 'workout_frequency', 'water_intake',
-        'session_duration', 'height', 'gender',
-        'workout_type', 'fat_percentage'
-    ]
+    models: Dict[str, keras.Sequential | Any] = {}
+    __map_objs = {
+            'low': {'quantile_loss' : quantile_loss_lower},
+            'high': {'quantile_loss': quantile_loss_upper}
+    }
     
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(ModelService, cls).__new__(cls)
         return cls._instance
-    
+
+    def _get_custom_object(self, type_):
+        return self.__map_objs[type_]
+
+    def load_keras_model(self, filepath: Path | str) -> keras.Sequential:
+        """Safe way to load Keras model with pickle"""
+        
+        try: 
+            model = keras.models.load_model(filepath=filepath)
+            return model # type: ignore
+        except Exception as e:
+            self.logger.exception(
+                "Failed to load keras instance",
+                error=str(e),
+                path=str(filepath)
+            )
+            raise
+
+    def load_instance_pkl(self, filename: str | Path):
+        with open(filename, 'rb') as f:
+            instance = pickle.load(f)
+        return instance
+
     @classmethod
     def load_models(cls):
         """Load all ML models."""
@@ -39,11 +58,18 @@ class ModelService(LoggerMixin):
         
         with log_execution_time("loading_regressors", level="info"):
             instance._load_regressors()
+
+        with log_execution_time("loading_base_models", level="info"):
+            instance._load_base_models()
+        
+        with log_execution_time("loading_scalers", level="info"):
+            instance._load_scalers()
         
         instance.logger.info(
             "All models loaded successfully",
             classifier_loaded="classifier" in instance.models,
-            regressors_loaded=list(instance.models.get("regressors", {}).keys())
+            regressors_loaded=list(instance.models.get("regressors", {}).keys()),
+            base_models_loaded=list(instance.models.get("base_models", {}).keys())
         )
     
     def _load_classifier(self):
@@ -56,7 +82,7 @@ class ModelService(LoggerMixin):
             )
             
             # Load your classifier
-            # Example: self.models["classifier"] = load_model(classifier_path)
+            self.models["classifier"] = self.load_keras_model(classifier_path)
             
             self.logger.info("Classifier loaded successfully")
             
@@ -68,6 +94,32 @@ class ModelService(LoggerMixin):
             )
             raise
     
+    def _load_scalers(self):
+        """Load scaler."""
+        self.models["scalers"] = {}
+        
+        for type_, path in settings.SCALERS_PATHS.items():
+            try:
+                self.logger.debug(
+                    f"Loading {type_} scaler",
+                    path=str(path)
+                )
+                
+                # Load scaler
+                self.models["scalers"][type_] = self.load_instance_pkl(path)
+
+                self.logger.info(
+                    f"{type_} scaler loaded",
+                    model_type="scaler"
+                )
+                
+            except Exception as e:
+                self.logger.exception(
+                    f"Failed to load {type_} scaler",
+                    error=str(e),
+                    path=str(path)
+                )
+                raise
     def _load_regressors(self):
         """Load regression models."""
         self.models["regressors"] = {}
@@ -80,10 +132,8 @@ class ModelService(LoggerMixin):
                 )
                 
                 # Load regressor
-                # Example: 
-                # with open(path, 'rb') as f:
-                #     self.models["regressors"][fat_class] = pickle.load(f)
-                
+                self.models["regressors"][fat_class] = self.load_keras_model(path,) #type_=fat_class if fat_class in ['low', 'high'] else None)
+
                 self.logger.info(
                     f"{fat_class} regressor loaded",
                     model_type="regressor"
@@ -109,10 +159,8 @@ class ModelService(LoggerMixin):
                 )
                 
                 # Load base model
-                # Example: 
-                # with open(path, 'rb') as f:
-                #     self.models["regressors"][fat_class] = pickle.load(f)
-                
+                self.models["base_models"][fat_class] = self.load_instance_pkl(path)
+
                 self.logger.info(
                     f"{fat_class} base model loaded",
                     model_type="base_model"
@@ -126,83 +174,70 @@ class ModelService(LoggerMixin):
                 )
                 raise
 
-    def encode_cat_features(self, data: pd.DataFrame) -> pd.DataFrame:
-        return pd.get_dummies(data=data)
-
-    @log_function_call("info")
-    def validate_data(self, data: Dict[str, Any]) -> Tuple[List[Any], pd.DataFrame]:
-        """Orders features in the correct order, returns a pd.DataFrame"""    
-        data_copy = copy.deepcopy(data)
-        data_copy['bmi'] = data_copy['weight'] / (data_copy['height'])**2
-        desired_order_list = self.features
-        
-        reordered_data = {k: data_copy[k] for k in desired_order_list}
-        orig_data = list(reordered_data.values())
-
-        X = pd.DataFrame([orig_data], columns=desired_order_list)
-        X = self.encode_cat_features(X)
-        # X_fe = add_engineered_features(X)
-        # X_test = X_scaler.transform(X_fe)
-        # ready for classification and then predictions
-        return orig_data, X
-    
-    @log_function_call("info")
-    def predict(self, features: Dict[str, float]) -> Dict[str, Any]:
-        """Make prediction using loaded models."""
+    def get_classifier(self) -> keras.Sequential:
+        self.logger.debug(
+                f"Getting a classifier",
+        )
         try:
-            self.logger.debug("Making prediction", features=features)
-            
-            # 1. Preprocess features
-            processed = self._preprocess_features(features)
-            
-            # 2. Classify
-            fat_class = self._classify(processed)
-            
-            # 3. Get predictions with base model
-            preds = None
-
-            # 4. Regress on residuals
-            percentage = self._regress(fat_class, processed)
-            
-            # 5. Combine predicitons
-            y_pred_full = None
-        
-            result = {
-                "fat_class": fat_class,
-                "fat_percentage": percentage,
-                "confidence": 0.85  # Example
-            }
-            
-            self.logger.info(
-                "Prediction completed",
-                result=result,
-                fat_class=fat_class
-            )
-            
-            return result
-            
+            return self.models['classifier']
         except Exception as e:
             self.logger.exception(
-                "Prediction failed",
+                f"Failed to get classifier",
                 error=str(e),
-                features=features
-            )
+                )
+            raise
+
+    def get_classification_scaler(self):
+        self.logger.debug(
+            f"Getting a classification scaler",
+        )
+        try:
+            return self.models['scalers']['class']
+        except Exception as e:
+            self.logger.exception(
+                f"Failed to get classification scaler",
+                error=str(e),
+                )
+            raise
+
+    def get_regression_scaler(self, fat_class):
+        self.logger.debug(
+            f"Getting a scaler, class: {fat_class}",
+        )
+        try:
+            return self.models['scalers'][fat_class]
+        except Exception as e:
+            self.logger.exception(
+                f"Failed to get scaler, class: {fat_class}",
+                error=str(e),
+                )
+            raise
+
+    def get_regressor(self, fat_class: str) -> keras.Sequential:    
+        self.logger.debug(
+            f"Getting a regressor, class: {fat_class}",
+        )
+        try:
+            return self.models['regressors'][fat_class]
+        except Exception as e:
+            self.logger.exception(
+                f"Failed to get regressor, class: {fat_class}",
+                error=str(e),
+                )
+            raise
+
+    def get_base_model(self, fat_class: str) -> keras.Sequential:    
+        self.logger.debug(
+            f"Getting a base model, class: {fat_class}",
+        )
+        try:
+            return self.models['base_models'][fat_class]
+        except Exception as e:
+            self.logger.exception(
+                f"Failed to get a base_model, class: {fat_class}",
+                error=str(e),
+                )
             raise
     
-    def _preprocess_features(self, features: Dict[str, float]) -> np.ndarray:
-        """Preprocess input features."""
-        with log_execution_time("feature_preprocessing", level="debug"):
-            # Your preprocessing logic
-            return np.array([1, 2, 3])
-    
-    def _classify(self, features: np.ndarray) -> str:
-        """Classify fat percentage category."""
-        with log_execution_time("classification", level="debug"):
-            # Your classification logic
-            return 'a'
-    
-    def _regress(self, fat_class: str, features: np.ndarray) -> float:
-        """Predict exact fat percentage."""
-        with log_execution_time("regression", level="debug"):
-            # Your regression logic
-            return 20.2
+    def __repr__(self):
+        return f"ModelService({self.models})"

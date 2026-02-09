@@ -2,9 +2,9 @@
 import time
 from contextlib import contextmanager
 from functools import wraps
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
-from app.config.logger import logger
+from config.logger import logger
 
 
 @contextmanager

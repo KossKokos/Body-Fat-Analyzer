@@ -2,6 +2,8 @@ import os
 import random
 import pickle
 
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -13,14 +15,8 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.linear_model import Lasso
 
-SEED = 42
 
-os.environ["PYTHONHASHSEED"] = str(SEED)
-random.seed(SEED)
-np.random.seed(SEED)
-tf.random.set_seed(SEED)
-
-def read_data(filename: str):
+def read_data(filename: Path):
   # reading data
   data = pd.read_csv(filename)
   # renaming columns
@@ -88,35 +84,30 @@ def read_data(filename: str):
 })
   # select only informative features
   data_selected_features = data[
-        ['age',
-          'gender',
-          'weight',
-          'height',
-          'max_bpm',
-          'avg_bpm',
-          'resting_bpm',
-          'session_duration',
-          'calories_burned',
-          'workout_type',
-          'fat_percentage',
-          'water_intake',
-          'workout_frequency',
-          'experience_level',
-          'bmi',
-          'daily_meals_frequency',
-          'physical_exercise',
-          'carbs',
-          'proteins',
-          'fats',
-          'calories',
-          'diet_type',
-          'sugar_g',
-          'sodium_mg',
-          'serving_size_g',
-          'cooking_method',
-          'prep_time_min',
-          'cook_time_min'
-          ]]
+       ['age',
+        'gender',
+        'weight',
+        'height',
+        'max_bpm',
+        'avg_bpm',
+        'resting_bpm',
+        'session_duration',
+        'calories_burned',
+        'workout_type',
+        'fat_percentage',
+        'water_intake',
+        'workout_frequency',
+        'experience_level',
+        'bmi',
+        'daily_meals_frequency',
+        'physical_exercise',
+        'carbs',
+        'proteins',
+        'fats',
+        'calories',
+        'diet_type',
+        'sugar_g',
+        ]]
 
   # drop Physical exercise feature
   data_selected_features = data_selected_features.drop('physical_exercise', axis=1)
@@ -141,14 +132,21 @@ def get_important_features(data):
   importance_df.drop('const', axis=0, inplace=True)
   important_features = list(importance_df[importance_df['Statistically Significant?'] == True].index)
 
-  important_features = important_features + ['session_duration', 'gender', 'workout_type', 'fat_percentage']
+  important_features = list(set(
+     important_features + 
+     ['age', 'weight', 'height', 'session_duration', 
+      'gender', 'workout_type', 'calories_burned', 
+      'workout_frequency', 'fat_percentage'
+      ]
+     ))
   data_important_features = data[important_features]
   return data_important_features
 
 
 def get_encoded_cat_features(data: pd.DataFrame) -> pd.DataFrame:
-  data_categorical = data.copy(deep=True)   
-  data_encoded = pd.get_dummies(data_categorical, dtype='float64')
+  data_copy = data.copy(deep=True)
+#   important_features = get_important_features(data=data_copy)
+  data_encoded = pd.get_dummies(data_copy, dtype='float64')
   data_encoded = data_encoded.rename(columns={f: f.lower() for f in data_encoded.columns})
   return data_encoded
 
@@ -161,36 +159,61 @@ def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     eps = 1e-9  # avoid division by zero
 
-    # ---------- Cardio / physiology ----------
+    # =====================================================
+    # Cardio / physiology
+    # =====================================================
     df["hrr"] = (df["max_bpm"] - df["resting_bpm"]).clip(lower=0)
-    df["intensity_ratio"] = df["resting_bpm"] / (df["max_bpm"] + eps)
+
+    df["intensity_ratio"] = df["avg_bpm"] / (df["max_bpm"] + eps)
+
     df["hrr_per_age"] = df["hrr"] / (df["age"] + eps)
 
-    # ---------- Training volume ----------
-    df["weekly_training_hours"] = (
+    # =====================================================
+    # Training volume & efficiency
+    # =====================================================
+    df["weekly_training_minutes"] = (
         df["workout_frequency"] * df["session_duration"]
     ).clip(lower=0)
+
+    df["weekly_training_hours"] = df["weekly_training_minutes"] / 60
 
     df["calories_per_training_hour"] = (
         df["calories_burned"] / (df["weekly_training_hours"] + eps)
     )
 
-    df["calories_per_kg"] = df["calories_burned"] / (df["weight"] + eps)
+    df["calories_per_minute"] = (
+        df["calories_burned"] / (df["session_duration"] + eps)
+    )
 
-    # ---------- Body composition ----------
-    df["bmi"] = df["weight"] / (df["height"] ** 2 + eps)
+    df["calories_per_kg"] = (
+        df["calories_burned"] / (df["weight"] + eps)
+    )
+
+    # =====================================================
+    # Body composition interactions
+    # =====================================================
     df["bmi_x_age"] = df["bmi"] * df["age"]
-    df["bmi_x_traininghours"] = df["bmi"] * df["weekly_training_hours"]
+    df["bmi_x_training_hours"] = df["bmi"] * df["weekly_training_hours"]
 
-    # ---------- Nutrition proxies ----------
-    df["calories_per_serving"] = df["calories"] / (df["serving_size_g"] + eps)
+    # =====================================================
+    # Nutrition ratios
+    # =====================================================
+    df["protein_ratio"] = df["proteins"] / (df["calories"] + eps)
+    df["carb_ratio"] = df["carbs"] / (df["calories"] + eps)
+    df["fat_ratio"] = df["fats"] / (df["calories"] + eps)
+
     df["sugar_per_calorie"] = df["sugar_g"] / (df["calories"] + eps)
-    df["sodium_per_calorie"] = df["sodium_mg"] / (df["calories"] + eps)
 
-    # ---------- Workout type composites ----------
+    df["calories_per_meal"] = (
+        df["calories"] / (df["daily_meals_frequency"] + eps)
+    )
+
+    # =====================================================
+    # Workout-type composites
+    # =====================================================
     df["high_intensity_workout"] = (
-        (df["workout_type_cardio"] == 1) |
-        (df["workout_type_hiit"] == 1)
+        (df["workout_type_hiit"] == 1) |
+        (df["workout_type_cardio"] == 1)
     ).astype(float)
 
     df["strength_vs_cardio"] = (
@@ -204,23 +227,29 @@ def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
         0.8 * df["workout_type_yoga"]
     )
 
-    df["type_adjusted_calories"] = df["calories_burned"] * (
-        1.5 * df["workout_type_hiit"] +
-        1.2 * df["workout_type_cardio"] +
-        1.1 * df["workout_type_strength"] +
-        0.9 * df["workout_type_yoga"]
-    )
+    # =====================================================
+    # Diet-type composites
+    # =====================================================
+    df["low_carb_diet"] = (
+        df["diet_type_keto"] +
+        df["diet_type_low-carb"] +
+        df["diet_type_paleo"]
+    ).clip(upper=1)
 
-    # ---------- Gender interactions ----------
+    df["plant_based_diet"] = (
+        df["diet_type_vegan"] +
+        df["diet_type_vegetarian"]
+    ).clip(upper=1)
+
+    # =====================================================
+    # Gender interactions
+    # =====================================================
     df["female_x_bmi"] = df["gender_female"] * df["bmi"]
     df["male_x_bmi"] = df["gender_male"] * df["bmi"]
 
-    # ---------- Time efficiency ----------
-    df["calories_per_minute"] = (
-        df["calories_burned"] / (df["session_duration"] * 60 + eps)
-    )
-
-    # ---------- Log transforms ----------
+    # =====================================================
+    # Log transforms (stable, informative)
+    # =====================================================
     for col in [
         "calories_burned",
         "weekly_training_hours",
@@ -233,7 +262,8 @@ def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def save_x_scaler(scaler, filename):
+
+def save_scaler(scaler, filename: str | Path):
   with open(filename, 'wb') as f:
     pickle.dump(scaler, f, pickle.HIGHEST_PROTOCOL)
 
@@ -252,7 +282,7 @@ def get_classification_data(data: pd.DataFrame):
   classification_data['class'] = classification_data.apply(func=get_class, axis=1) # type: ignore
   return classification_data
 
-def get_train_test_classification(data: pd.DataFrame):
+def get_train_test_classification(data: pd.DataFrame, scaler):
   X = data.copy()
   X.pop('fat_percentage') # remove fat_percentage
   y = X.pop('class') # class is new target feature
@@ -273,12 +303,11 @@ def get_train_test_classification(data: pd.DataFrame):
   # reshaping our 1D vectors into 2D
   y_train, y_test, y_val = y_train.reshape(-1, 1), y_test.reshape(-1, 1), y_val.reshape(-1, 1)
 
-  X_scaler = MinMaxScaler()
-
+  
   # training scalers on training data and transforming test/val data using it
-  X_train_trans = X_scaler.fit_transform(X_train)
-  X_test_trans = X_scaler.transform(X_test)
-  X_val_trans = X_scaler.transform(X_val)
+  X_train_trans = scaler.fit_transform(X_train) # just once
+  X_test_trans = scaler.transform(X_test)
+  X_val_trans = scaler.transform(X_val)
 
   splits = {
      "X_train": X_train, "X_test": X_test, "X_val": X_val,
@@ -376,7 +405,7 @@ def get_data_for_regressors(data: pd.DataFrame):
 
   return low_fat_data, mid_fat_data, high_fat_data
 
-def get_regressor_splits(data: pd.DataFrame):
+def get_regressor_splits(data: pd.DataFrame, scaler: MinMaxScaler):
   X = data.copy(deep=True)
   X.pop('class') # remove fat_percentage
   y = X.pop('fat_percentage') # class is new target feature
@@ -396,12 +425,10 @@ def get_regressor_splits(data: pd.DataFrame):
   # reshaping our 1D vectors into 2D
   y_train, y_test, y_val = y_train.reshape(-1, 1), y_test.reshape(-1, 1), y_val.reshape(-1, 1)
 
-  X_scaler = MinMaxScaler()
-  
   # training scalers on training data and transforming test/val data using it
-  X_train_trans = X_scaler.fit_transform(X_train)
-  X_test_trans = X_scaler.transform(X_test)
-  X_val_trans = X_scaler.transform(X_val)
+  X_train_trans = scaler.fit_transform(X_train)
+  X_test_trans = scaler.transform(X_test)
+  X_val_trans = scaler.transform(X_val)
 
   splits = {
      "X_train": X_train, "X_test": X_test, "X_val": X_val,
@@ -412,14 +439,15 @@ def get_regressor_splits(data: pd.DataFrame):
   return splits
 
 
-def save_model_pickle(model, filename, custom_objects=None):
-    """Safe way to save Keras model with pickle"""
-    # Save model config and weights separately
-    config = model.get_config()
-    weights = model.get_weights()
+def save_model(model, path):
+    """Safe way to save Keras model"""
+    model.save(path)
+
+    # config = model.get_config()
+    # weights = model.get_weights()
     
-    with open(filename, 'wb') as f:
-        pickle.dump({'config': config, 'weights': weights, 'custom_objects': custom_objects}, f)
+    # with open(filename, 'wb') as f:
+    #     pickle.dump({'config': config, 'weights': weights, 'custom_objects': custom_objects}, f)
 
 def load_model_pickle(filename):
     """Safe way to load Keras model with pickle"""
@@ -534,7 +562,7 @@ def train_get_regressor(splits, preds, name, loss_func):
       splits['X_train_trans'],
       preds['y_train_resid'],
       validation_data=(splits['X_val_trans'], preds['y_val_resid']),
-      epochs=100,
+      epochs=80,
       callbacks=[early_stopping, reduce_lr],
       verbose=0 # type: ignore
   )
@@ -543,68 +571,91 @@ def train_get_regressor(splits, preds, name, loss_func):
 
 
 if __name__ == '__main__':
+  SEED = 42
+
+  os.environ["PYTHONHASHSEED"] = str(SEED)
+  random.seed(SEED)
+  np.random.seed(SEED)
+  tf.random.set_seed(SEED)
+
+  classification_scaler = MinMaxScaler()
+  regressor_scalers = {
+   'low_fat_scaler' : MinMaxScaler(),
+   'mid_fat_scaler' : MinMaxScaler(),
+   'high_fat_scaler' : MinMaxScaler()
+  }
+  
+  models_path = Path(__file__).parent.parent / "models"   
 
   # Preparing data
-  data = read_data(filename="Final_data.csv")
-  print("Data was loaded\n")
-  # important_data = get_important_features(data=data)
+  filepath = Path(__file__).parent / 'Final_data.csv'
+  data = read_data(filename=filepath)
   encoded_data = get_encoded_cat_features(data=data)
-  # Classification model
+
+  # Classification
   classification_data = get_classification_data(data=encoded_data)
-  splits = get_train_test_classification(data=classification_data)
+  splits = get_train_test_classification(data=classification_data, scaler=classification_scaler)
   classifier = train_get_classifier(splits=splits)
-  print("Classifier was trained \n")
-  save_model_pickle(model=classifier, filename=classifier.name)
+  classifier_path = models_path / "classifiers" / f"{classifier.name}.keras"
+  class_scaler_path = models_path / "scalers" / "classification_scaler.pkl"
+  save_model(model=classifier, path=classifier_path)
+  save_scaler(scaler=classification_scaler, filename=class_scaler_path)
   
   # Data for regressors
   low_fat_data, mid_fat_data, high_fat_data = get_data_for_regressors(data=classification_data)  
   
   # Low-fat regressor
-  low_fat_splits = get_regressor_splits(data=low_fat_data)
+  low_fat_splits = get_regressor_splits(data=low_fat_data, scaler=regressor_scalers['low_fat_scaler'])
   low_base_model = get_base_model(splits=low_fat_splits)
-  print("Low fat base model created\n")
   low_fat_preds = get_base_predictions(base_model=low_base_model, splits=low_fat_splits)
-  save_base_model_pkl(model=low_base_model, filename="low_fat_base_model.pkl")
+  
+  l_base_model_path = models_path / "base_models" / "low_fat_base_model.pkl"
+  save_base_model_pkl(model=low_base_model, filename=l_base_model_path)
+  
   low_fat_regressor = train_get_regressor(
                         splits=low_fat_splits, 
                         preds=low_fat_preds,
                         name="low_fat_residuals_regressor_v1",
                         loss_func=quantile_loss_lower)
-  print("Low fat regressor is trained\n")
-  lower_custom_objects = {'quantile_loss': quantile_loss_lower}
-  save_model_pickle(
-     model=low_fat_regressor, 
-     filename=low_fat_regressor.name,
-     custom_objects=lower_custom_objects)
-    
+  
+  l_regressor_path = models_path / "regressors" / f"{low_fat_regressor.name}.keras"
+  l_scaler_path = models_path / "scalers" / "low_fat_scaler.pkl"
+  save_model(model=low_fat_regressor, path=l_regressor_path)
+  save_scaler(scaler=regressor_scalers['low_fat_scaler'], filename=l_scaler_path)
+
   # Mid-fat regressor
-  mid_fat_splits = get_regressor_splits(data=mid_fat_data)
+  mid_fat_splits = get_regressor_splits(data=mid_fat_data, scaler=regressor_scalers['mid_fat_scaler'])
   mid_base_model = get_base_model(splits=mid_fat_splits)
   mid_fat_preds = get_base_predictions(base_model=mid_base_model, splits=mid_fat_splits)
-  save_base_model_pkl(model=mid_base_model, filename="mid_fat_base_model.pkl")
+  
+  m_base_model_path = models_path / "base_models" / "mid_fat_base_model.pkl"
+  save_base_model_pkl(model=mid_base_model, filename=m_base_model_path)
 
   mid_fat_regressor = train_get_regressor(
                         splits=mid_fat_splits, 
                         preds=mid_fat_preds,
                         name="mid_fat_residuals_regressor_v1",
                         loss_func=keras.losses.Huber(delta=1.0))
-  save_model_pickle(
-     model=mid_fat_regressor, 
-     filename=mid_fat_regressor.name)
+  m_regressor_path = models_path / "regressors" / f"{mid_fat_regressor.name}.keras"
+  m_scaler_path = models_path / "scalers" / "mid_fat_scaler.pkl"
+  save_model(model=mid_fat_regressor, path=m_regressor_path)
+  save_scaler(scaler=regressor_scalers['mid_fat_scaler'], filename=m_scaler_path)
 
   # High-fat regressor
-  high_fat_splits = get_regressor_splits(data=high_fat_data)
+  high_fat_splits = get_regressor_splits(data=high_fat_data, scaler=regressor_scalers['high_fat_scaler'])
   high_base_model = get_base_model(splits=high_fat_splits)
   high_fat_preds = get_base_predictions(base_model=high_base_model, splits=high_fat_splits)
-  save_base_model_pkl(model=high_base_model, filename="high_fat_base_model.pkl")
+
+  h_base_model_path = models_path / "base_models" / "high_fat_base_model.pkl"
+  save_base_model_pkl(model=high_base_model, filename=h_base_model_path)
 
   high_fat_regressor = train_get_regressor(
                         splits=high_fat_splits, 
                         preds=high_fat_preds,
                         name="high_fat_residuals_regressor_v1",
                         loss_func=quantile_loss_upper)
-  upper_custom_objects = {'quantile_loss': quantile_loss_upper}
-  save_model_pickle(
-     model=high_fat_regressor, 
-     filename=high_fat_regressor.name,
-     custom_objects=upper_custom_objects)
+
+  h_regressor_path = models_path / "regressors" / f"{high_fat_regressor.name}.keras"
+  h_scaler_path = models_path / "scalers" / "high_fat_scaler.pkl"
+  save_model(model=high_fat_regressor, path=h_regressor_path)
+  save_scaler(scaler=regressor_scalers['high_fat_scaler'], filename=h_scaler_path)

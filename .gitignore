@@ -2,4 +2,7 @@ back_end/.venv
 back_end/datasets
 __pycache__/
 back_end/.env
-back_end/src
+src
+pre_trained_instances
+history.csv
+datasets
