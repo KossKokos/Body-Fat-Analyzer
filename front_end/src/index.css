@@ -29,3 +29,62 @@
     @apply bg-white rounded-xl shadow-lg p-6;
   }
 }
+
+@layer components {
+  /* Better form spacing */
+  .input-field {
+    @apply transition-all duration-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+  }
+  
+  /* Sticky button animation */
+  .sticky-button-enter {
+    @apply transform translate-y-full;
+  }
+  .sticky-button-enter-active {
+    @apply transform translate-y-0 transition-transform duration-300;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better form section spacing */
+section:not(:last-child) {
+  @apply mb-8;
+}
+
+@layer components {
+  .btn-green {
+    background-color: rgb(55 172 26);
+  }
+  
+  .btn-green:hover {
+    background-color: rgb(45 152 16);
+  }
+  
+  .btn-green:active {
+    background-color: rgb(40 142 11);
+  }
+  
+  .btn-green:focus {
+    ring-color: rgb(55 172 26);
+  }
+  
+  .text-green-custom {
+    color: rgb(55 172 26);
+  }
+  
+  .bg-green-custom {
+    background-color: rgb(55 172 26);
+  }
+  
+  .border-green-custom {
+    border-color: rgb(55 172 26);
+  }
+  
+  .ring-green-custom {
+    --tw-ring-color: rgb(55 172 26);
+  }
+}

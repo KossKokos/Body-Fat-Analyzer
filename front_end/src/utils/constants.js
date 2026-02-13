@@ -4,6 +4,28 @@ export const ACTIVITY_LEVELS = [
   { value: 'active', label: 'Active (exercise 5+ times/week)' },
 ];
 
+export const WORKOUT_TYPES = [
+  { value: 'cardio', label: 'Cardio' },
+  { value: 'hiit', label: 'HIIT' },
+  { value: 'strength', label: 'Strength Training' },
+  { value: 'yoga', label: 'Yoga/Pilates' },
+];
+
+export const DIET_TYPES = [
+  { value: 'vegan', label: 'Vegan' },
+  { value: 'vegetarian', label: 'Vegetarian' },
+  { value: 'paleo', label: 'Paleo' },
+  { value: 'keto', label: 'Keto' },
+  { value: 'low-carb', label: 'Low-Carb' },
+  { value: 'balanced', label: 'Balanced' },
+];
+
+export const EXPERIENCE_LEVELS = [
+  { value: 1, label: 'Beginner' },
+  { value: 2, label: 'Intermediate' },
+  { value: 3, label: 'Advanced' },
+];
+
 export const FAT_CLASS_INFO = {
   low: {
     label: 'Low Fat',
@@ -29,11 +51,33 @@ export const FAT_CLASS_INFO = {
 };
 
 export const DEFAULT_FORM_VALUES = {
+  // Demographics
+  age: '',
+  gender: 'male',
+  
+  // Body metrics
   weight: '',
   height: '',
-  age: '',
+  
+  // Heart rate metrics
+  max_bpm: '',
+  avg_bpm: '',
+  resting_bpm: '',
+  
+  // Training
+  session_duration: '',
   calories_burned: '',
-  calories_eaten: '',
-  gender: 'male',
-  activity_level: 'moderate',
+  workout_type: 'cardio',
+  workout_frequency: '',
+  experience_level: 1,
+  
+  // Nutrition
+  calories: '',
+  carbs: '',
+  proteins: '',
+  fats: '',
+  sugar_g: '',
+  diet_type: 'balanced',
+  daily_meals_frequency: '',
+  water_intake: '',
 };

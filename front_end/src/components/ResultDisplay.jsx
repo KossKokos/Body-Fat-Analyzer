@@ -1,95 +1,97 @@
 import { FAT_CLASS_INFO } from '../utils/constants';
-import { TrendingUp, TrendingDown, Activity, Heart } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, Heart, Flame, Droplets } from 'lucide-react';
 
-const ResultDisplay = ({ prediction }) => {
+const ResultDisplay = ({ prediction, onNewPrediction }) => {  // Add onNewPrediction prop
   const { fat_class, fat_percentage, confidence, timestamp } = prediction;
   const classInfo = FAT_CLASS_INFO[fat_class];
   
   const getRecommendation = () => {
     switch(fat_class) {
       case 'low':
-        return "Maintain your healthy lifestyle with balanced nutrition and regular exercise.";
+        return "Excellent! Your body fat percentage is in the healthy range. Maintain your current lifestyle with balanced nutrition and regular exercise.";
       case 'mid':
-        return "Consider adding more cardio and strength training to your routine.";
+        return "Good progress! Consider adding more cardio and strength training to your routine to reach optimal levels.";
       case 'high':
-        return "Focus on creating a calorie deficit through diet and increased activity.";
+        return "Focus on creating a sustainable calorie deficit through diet modifications and increased physical activity. Consider consulting a nutritionist.";
       default:
         return "";
     }
+  };
+
+  const getHeartRateInsight = () => {
+    const restingBpm = prediction.resting_bpm;
+    if (restingBpm < 60) return "Excellent resting heart rate!";
+    if (restingBpm < 70) return "Good resting heart rate.";
+    return "Consider cardio training to improve heart health.";
   };
 
   return (
     <div className="space-y-6">
       {/* Main Result Card */}
       <div className={`${classInfo.bgColor} border-2 ${classInfo.textColor.replace('text', 'border')} rounded-xl p-6`}>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
           <div>
-            <h3 className="text-2xl font-bold">Prediction Result</h3>
+            <h3 className="text-2xl font-bold">Comprehensive Analysis</h3>
             {timestamp && (
               <p className="text-sm opacity-75">
-                {new Date(timestamp).toLocaleString()}
+                Generated: {new Date(timestamp).toLocaleString()}
               </p>
             )}
           </div>
-          <div className={`${classInfo.color} w-12 h-12 rounded-full flex items-center justify-center`}>
-            <Activity className="h-6 w-6 text-white" />
+          <div className="flex items-center mt-2 md:mt-0">
+            <div className={`${classInfo.color} w-10 h-10 rounded-full flex items-center justify-center mr-3`}>
+              <Activity className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <div className={`text-lg font-semibold ${classInfo.textColor}`}>
+                {classInfo.label}
+              </div>
+              {confidence && (
+                <div className="text-xs text-gray-600">
+                  Confidence: {(confidence * 100).toFixed(1)}%
+                </div>
+              )}
+            </div>
           </div>
         </div>
         
         <div className="text-center py-6">
           <div className="text-5xl font-bold mb-2">{fat_percentage.toFixed(1)}%</div>
-          <div className={`text-xl font-semibold ${classInfo.textColor}`}>
-            {classInfo.label}
-          </div>
-          <p className="text-gray-600 mt-2">{classInfo.description}</p>
-        </div>
-
-        {confidence && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-gray-600">
-              <span className="font-medium">Confidence:</span> {(confidence * 100).toFixed(1)}%
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Recommendation */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <div className="flex items-center mb-4">
-          <Heart className="h-5 w-5 text-primary-600 mr-2" />
-          <h4 className="text-lg font-semibold">Health Recommendation</h4>
-        </div>
-        <p className="text-gray-700">{getRecommendation()}</p>
-        
-        <div className="mt-4 grid grid-cols-2 gap-4">
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <TrendingDown className="h-5 w-5 text-blue-600 mb-1" />
-            <p className="text-sm text-blue-700">
-              <span className="font-medium">Calorie Balance:</span> {prediction.calories_burned > prediction.calories_eaten ? 'Deficit' : 'Surplus'}
-            </p>
-          </div>
-          <div className="bg-green-50 p-3 rounded-lg">
-            <TrendingUp className="h-5 w-5 text-green-600 mb-1" />
-            <p className="text-sm text-green-700">
-              <span className="font-medium">Status:</span> {fat_class === 'low' ? 'Optimal' : 'Needs Attention'}
-            </p>
-          </div>
+          <p className="text-gray-600">Body Fat Percentage</p>
+          <p className="text-sm text-gray-500 mt-2">{classInfo.description}</p>
         </div>
       </div>
 
-      {/* Share/Reset Buttons */}
-      <div className="flex space-x-4">
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
         <button
-          onClick={() => window.location.reload()}
-          className="btn-secondary flex-1"
+          onClick={onNewPrediction}
+          className="btn-secondary flex-1 py-3"
         >
-          New Prediction
+          ↻ New Analysis
+        </button>
+        <button
+          onClick={() => {
+            const dataStr = JSON.stringify(prediction, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `fat-prediction-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }}
+          className="btn-primary flex-1 py-3"
+        >
+          💾 Download Results
         </button>
         <button
           onClick={() => window.print()}
-          className="btn-primary flex-1"
+          className="bg-gray-100 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium flex-1"
         >
-          Save Results
+          🖨️ Print Report
         </button>
       </div>
     </div>
