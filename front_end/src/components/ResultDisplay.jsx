@@ -1,0 +1,101 @@
+import { FAT_CLASS_INFO } from '../utils/constants';
+import { TrendingUp, TrendingDown, Activity, Heart, Flame, Droplets } from 'lucide-react';
+
+const ResultDisplay = ({ prediction, onNewPrediction }) => {  // Add onNewPrediction prop
+  const { fat_class, fat_percentage, confidence, timestamp } = prediction;
+  const classInfo = FAT_CLASS_INFO[fat_class];
+  
+  const getRecommendation = () => {
+    switch(fat_class) {
+      case 'low':
+        return "Excellent! Your body fat percentage is in the healthy range. Maintain your current lifestyle with balanced nutrition and regular exercise.";
+      case 'mid':
+        return "Good progress! Consider adding more cardio and strength training to your routine to reach optimal levels.";
+      case 'high':
+        return "Focus on creating a sustainable calorie deficit through diet modifications and increased physical activity. Consider consulting a nutritionist.";
+      default:
+        return "";
+    }
+  };
+
+  const getHeartRateInsight = () => {
+    const restingBpm = prediction.resting_bpm;
+    if (restingBpm < 60) return "Excellent resting heart rate!";
+    if (restingBpm < 70) return "Good resting heart rate.";
+    return "Consider cardio training to improve heart health.";
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Main Result Card */}
+      <div className={`${classInfo.bgColor} border-2 ${classInfo.textColor.replace('text', 'border')} rounded-xl p-6`}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
+          <div>
+            <h3 className="text-2xl font-bold">Comprehensive Analysis</h3>
+            {timestamp && (
+              <p className="text-sm opacity-75">
+                Generated: {new Date(timestamp).toLocaleString()}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center mt-2 md:mt-0">
+            <div className={`${classInfo.color} w-10 h-10 rounded-full flex items-center justify-center mr-3`}>
+              <Activity className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <div className={`text-lg font-semibold ${classInfo.textColor}`}>
+                {classInfo.label}
+              </div>
+              {confidence && (
+                <div className="text-xs text-gray-600">
+                  Confidence: {(confidence * 100).toFixed(1)}%
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="text-center py-6">
+          <div className="text-5xl font-bold mb-2">{fat_percentage.toFixed(1)}%</div>
+          <p className="text-gray-600">Body Fat Percentage</p>
+          <p className="text-sm text-gray-500 mt-2">{classInfo.description}</p>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
+        <button
+          onClick={onNewPrediction}
+          className="btn-secondary flex-1 py-3"
+        >
+          ↻ New Analysis
+        </button>
+        <button
+          onClick={() => {
+            const dataStr = JSON.stringify(prediction, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `fat-prediction-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }}
+          className="btn-primary flex-1 py-3"
+        >
+          💾 Download Results
+        </button>
+        <button
+          onClick={() => window.print()}
+          className="bg-gray-100 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium flex-1"
+        >
+          🖨️ Print Report
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ResultDisplay;

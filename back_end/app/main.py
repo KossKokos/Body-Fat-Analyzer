@@ -93,7 +93,7 @@ async def main():
     uvicorn.run(
         settings.APP_MAIN,
         host=settings.APP_HOST,
-        port=settings.APP_PORT, # type: ignore
+        port=int(settings.APP_PORT), # type: ignore
         reload=settings.DEBUG,
         log_level=settings.LOG_LEVEL.lower(),
     )
