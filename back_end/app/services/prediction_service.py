@@ -100,8 +100,7 @@ class PredictionService:
 
     def _get_final_preds(self, preds: np.ndarray, residuals: np.ndarray) -> np.ndarray:
         final_preds = preds.reshape(-1) + residuals.reshape(-1)
-        # return final_preds
-        return preds.reshape(-1)
+        return final_preds
     
     def _get_fat_class_name(self, fat_class: int) -> str:
         return self.map_fat_class[fat_class]
@@ -145,16 +144,20 @@ class PredictionService:
         # Step 7: Combine predictions 
         final_preds = self._get_final_preds(preds, residuals)
         fat_percentage = round(final_preds.item(), 3)
+        
+        # Step 8: Format
+        if float(fat_percentage) < 5:
+            fat_percentage = float(5)
+        elif float(fat_percentage) > 40:
+            fat_percentage = float(40)
+
         logger.info(
                     f"Recieved final prediction: {fat_percentage}",
                 )
-        # Step 8: Format
+
         result = {
             "fat_class": fat_class,
             "fat_percentage": float(fat_percentage),
             "timestamp": datetime.now()
-        }
-        # Step 6: Log
-        # self.history_service.save_prediction(user_data, result)
-        
+        }        
         return result
