@@ -9,7 +9,7 @@ from ml.loading_script import quantile_loss_lower, quantile_loss_upper
 from utils.logger import log_execution_time, LoggerMixin
 from config.settings import settings
 
-# to inore messagesP
+# to inore messages
 
 class ModelService(LoggerMixin):
     """Service for managing ML models."""
@@ -132,7 +132,7 @@ class ModelService(LoggerMixin):
                 )
                 
                 # Load regressor
-                self.models["regressors"][fat_class] = self.load_keras_model(path,) #type_=fat_class if fat_class in ['low', 'high'] else None)
+                self.models["regressors"][fat_class] = self.load_keras_model(path)
 
                 self.logger.info(
                     f"{fat_class} regressor loaded",

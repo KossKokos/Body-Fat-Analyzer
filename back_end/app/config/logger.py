@@ -1,11 +1,6 @@
-# app/config/logger.py
-import logging
 import sys
 from logging.config import dictConfig
-from pathlib import Path
 from typing import Dict, Any
-import json
-from datetime import datetime
 
 import structlog
 from structlog.stdlib import BoundLogger

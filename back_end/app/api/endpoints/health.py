@@ -1,23 +1,53 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-
+from sqlalchemy import text, bindparam
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 
-from api.dependencies import get_db
+from api.dependencies import get_db, verify_api_key
+from config.settings import settings
 
-router = APIRouter(prefix="/healthchecker")
+router = APIRouter(prefix="/health", tags=["health"])
+
 
 @router.get("/")
-def healthchecker(db: Session = Depends(get_db)):
+def app_health_check(_: str = Depends(verify_api_key)):
+    return {"status": "ok"}
+
+
+@router.get("/db")
+def db_health_check(
+    db: Session = Depends(get_db),
+    _: str = Depends(verify_api_key),
+):
 
     try:
-        result = db.execute(text("SELECT 1")).fetchone()
-        print(result)
-        if result is None:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                detail="Database is not configured correctly")
-        return {"message": "Welcome to FastAPI!"}
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail="Error connecting to the database")
+        db.execute(text("SELECT 1")).scalar_one()
+
+        required_tables = sorted(settings.REQUIRED_TABLES)
+        stmt = text("""
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_name IN :required_tables
+        """).bindparams(bindparam("required_tables", expanding=True))
+
+        rows = db.execute(stmt, {"required_tables": required_tables}).fetchall()
+        found_tables = sorted([row[0] for row in rows])
+        
+        if found_tables != required_tables:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Service unavailable",
+            )
+        for table in required_tables:
+            db.execute(text(f"SELECT COUNT(*) FROM {table}")).scalar_one()
+
+        return {"status": "ok"}
+
+    except HTTPException:
+        raise
+    except SQLAlchemyError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service unavailable",
+        )
