@@ -36,6 +36,29 @@ class PredictionRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
+    prediction_id: int
     fat_class: Literal["low", "mid", "high"]
     fat_percentage: float = Field(ge=0, le=100)
     timestamp: datetime
+
+
+class PredictionFeedbackCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    prediction_id: int = Field(gt=0)
+    rating: int = Field(ge=0, le=10)
+    is_prediction_close: bool | None = None
+    actual_fat_percentage: float | None = Field(default=None, ge=0, le=100)
+    comment: str | None = Field(default=None, max_length=2000)
+    consent_to_retrain: bool = False
+
+
+class PredictionFeedbackResponse(BaseModel):
+    id: int
+    prediction_id: int
+    rating: int
+    is_prediction_close: bool | None = None
+    actual_fat_percentage: float | None = None
+    comment: str | None = None
+    consent_to_retrain: bool
+    created_at: datetime

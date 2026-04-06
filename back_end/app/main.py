@@ -9,7 +9,7 @@ from services.model_service import ModelService
 from services.prediction_service import PredictionService
 from api.endpoints.predictions import router as prediction_router
 from api.endpoints.health import router as health_router
-
+from api.endpoints.feedback import router as feedback_router
 from api.security import (
     APIKeyMiddleware, 
     SecurityHeadersMiddleware,
@@ -100,8 +100,8 @@ app = application.application
 
 # Include routes 
 app.include_router(router=prediction_router, prefix='/api')
+app.include_router(router=feedback_router, prefix='/api')
 app.include_router(router=health_router, prefix='/api')
-
 
 def main():
     import os 
