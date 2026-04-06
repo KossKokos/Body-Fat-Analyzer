@@ -20,39 +20,40 @@ class Settings(BaseSettings):
     )
 
     #  Database
-    POSTGRES_DB: str = os.environ.get("POSTGRES_DB") # type: ignore
-    POSTGRES_USER: str = os.environ.get("POSTGRES_DB") # type: ignore
-    POSTGRES_PASSWORD: str = os.environ.get("POSTGRES_DB") # type: ignore
-    POSTGRES_PORT: str = os.environ.get("POSTGRES_DB") # type: ignore
-    POSTGRES_HOST: str = os.environ.get("POSTGRES_DB") # type: ignore
-    SQLALCHEMY_DATABASE_URL: str = os.environ.get("SQLALCHEMY_DATABASE_URL") # type: ignore
+    POSTGRES_DB: str = ""
+    POSTGRES_USER: str = ""
+    POSTGRES_PASSWORD: str = ""
+    POSTGRES_PORT: str = ""
+    POSTGRES_HOST: str = ""
+    SQLALCHEMY_DATABASE_URL: str = ""
 
+    DB_SSL_MODE: str = ""
+    DB_POOL_PRE_PING: bool = True
+    DB_POOL_SIZE: int = 5
+    DB_MAX_OVERFLOW: int = 10
+    DB_POOL_RECYCLE: int = 1800
+    DB_ECHO: bool = False
+
+    # DB instances
+    REQUIRED_TABLES: List[str] = []
     # APP START UP
-    APP_MAIN: str = os.environ.get("APP_MAIN") # type: ignore
-    APP_HOST: str = os.environ.get("APP_HOST") # type: ignore
-    APP_PORT: str = os.environ.get("APP_PORT") # type: ignore
+    APP_MAIN: str = ""
+    APP_HOST: str = ""
+    APP_PORT: str = ""
 
     PROJECT_NAME: str = "Body_Fat_Percentage_Predictor"
     VERSION: str = "1.0.0"
 
-    ENVIRONMENT: str = "development"
+    ENVIRONMENT: str = ""
     DEBUG: bool = False
     DOCS: bool = False
 
-    API_V1_STR: str = "/api"
-    FRONTEND_URL: str = "http://localhost:5173"
-    API_KEY: str = os.environ.get("API_KEY") # type: ignore
+    API_V1_STR: str = ""
+    FRONTEND_URL: str = ""
+    API_KEY: str = ""
 
-    ALLOWED_ORIGINS: list = [
-        FRONTEND_URL,
-        "http://localhost:3000", 
-        "http://127.0.0.1:5173",
-        "http://localhost:8000"
-    ]
-    ALLOWED_HOSTS: list = [
-        "localhost",
-        "127.0.0.1"
-    ]
+    ALLOWED_ORIGINS: List[str] = []
+    ALLOWED_HOSTS: List[str] = []
 
     LOG_LEVEL: str = "INFO"
     LOG_JSON: bool = False
@@ -94,8 +95,8 @@ class Settings(BaseSettings):
             headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return headers
 
-    APP_MAIN: str = os.environ.get("APP_MAIN") # type: ignore
-    APP_HOST: str = os.environ.get("APP_HOST") # type: ignore
-    APP_PORT: str = os.environ.get("APP_PORT") # type: ignore
+    APP_HOST: str = ""
+    APP_MAIN: str = ""
+    APP_PORT: str = ""
 
 settings = Settings()
