@@ -9,6 +9,12 @@ from services.model_service import ModelService
 from services.prediction_service import PredictionService
 from api.endpoints.predictions import router as prediction_router
 from api.endpoints.health import router as health_router
+from api.endpoints.feedback import router as feedback_router
+from api.security import (
+    APIKeyMiddleware, 
+    SecurityHeadersMiddleware,
+    RateLimitMiddleware
+)
 
 
 class Application():
@@ -21,21 +27,31 @@ class Application():
             log_file=settings.LOG_FILE if settings.LOG_TO_FILE else None
         )
         
-        self.app_logger = logger.logger.with_context(app="fat_percentage_predictor")
-        self.app_logger.info("Starting application", version="1.0.0")
+        self.app_logger = logger.logger.with_context(app=settings.PROJECT_NAME)
+        self.app_logger.info("Starting application", version=settings.PROJECT_VERSION)
 
     def _setup_middlewares(self):
         # Setup CORS
         self.app_logger.info("Setting up middlewares")
-        if settings.BACKEND_CORS_ORIGINS:
-            self.application.add_middleware(
-                CORSMiddleware,
-                allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-                allow_credentials=True,
-                allow_methods=["*"],
-                allow_headers=["*"],
-            )
-        self.app_logger.info("Middlewares setted up successfully")
+
+        self.application.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.ALLOWED_ORIGINS,
+            allow_credentials=True,
+            allow_methods=settings.ALLOW_METHODS,  
+            allow_headers=settings.ALLOW_HEADERS,  
+            expose_headers=settings.EXPOSE_HEADERS,
+            max_age=settings.MAX_AGE,
+        )
+
+        # Add security middlewares (order matters)
+        self.application.add_middleware(SecurityHeadersMiddleware)
+        self.application.add_middleware(APIKeyMiddleware)
+
+        if settings.ENVIRONMENT == "production":
+            app.add_middleware(RateLimitMiddleware, calls_per_minute=settings.CALLS_PER_MINUTE)
+
+        self.app_logger.info("Middlewares set up successfully")
 
     @asynccontextmanager
     async def _lifespan(self, app: FastAPI):
@@ -61,14 +77,14 @@ class Application():
         # Create FastAPI app
         self.application = FastAPI(
             title=settings.PROJECT_NAME,
-            version=settings.VERSION,
-            openapi_url=f"{settings.API_V1_STR}/openapi.json",
-            docs_url="/docs" if settings.DOCS else None,
+            version=settings.PROJECT_VERSION,
+            openapi_url="/api/openapi.json",
+            docs_url="/docs" if settings.ENVIRONMENT == "development" else None,
             redoc_url="/redoc" if settings.DOCS else None,
             lifespan=self._lifespan,
         )
 
-        self.app_logger.info("Application created successfully")
+        self.app_logger.info("Application started successfully")
         return self.application
     
     def init_app(self):
@@ -81,23 +97,24 @@ application = Application()
 application.init_app()
 app = application.application
 
-app.include_router(router=prediction_router, prefix='/api')
-app.include_router(router=health_router, prefix='/api')
+# Include routes 
+app.include_router(router=prediction_router, prefix=settings.API_PREFIX)
+app.include_router(router=feedback_router, prefix=settings.API_PREFIX)
+app.include_router(router=health_router, prefix=settings.API_PREFIX)
 
-
-async def main():
-    import uvicorn
+def main():
     import os 
+    import uvicorn
+    
     os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
     uvicorn.run(
         settings.APP_MAIN,
         host=settings.APP_HOST,
-        port=int(settings.APP_PORT), # type: ignore
+        port=int(settings.APP_PORT), 
         reload=settings.DEBUG,
         log_level=settings.LOG_LEVEL.lower(),
     )
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main=main())
+    main()

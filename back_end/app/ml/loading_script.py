@@ -392,12 +392,6 @@ def train_get_classifier(splits: dict):
   )
   return c_model
 
-  # with open(f'{c_model.name}.pkl', 'wb') as f:
-  #   pickle.dump(c_model, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-# with open('fat_percentage_classifier_v1.pkl', 'rb') as f:
-#   c_model = pickle.load(f)
-
 def get_data_for_regressors(data: pd.DataFrame):
   low_fat_data = data[data['class'] == 0]
   mid_fat_data = data[data['class'] == 1]
@@ -443,11 +437,6 @@ def save_model(model, path):
     """Safe way to save Keras model"""
     model.save(path)
 
-    # config = model.get_config()
-    # weights = model.get_weights()
-    
-    # with open(filename, 'wb') as f:
-    #     pickle.dump({'config': config, 'weights': weights, 'custom_objects': custom_objects}, f)
 
 def load_model_pickle(filename):
     """Safe way to load Keras model with pickle"""

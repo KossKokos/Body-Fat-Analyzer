@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 
 from database.db import SessionLocal
 
-
 def get_prediction_service(request: Request):
     return request.app.state.prediction_service
 

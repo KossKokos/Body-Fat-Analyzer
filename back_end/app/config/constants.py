@@ -1,0 +1,67 @@
+# PREDICTION SERVICE CONSTANTS ----------------------------------------------
+RAW_FEATURES: tuple[str, ...] = (
+    "age",
+    "gender",
+    "weight",
+    "height",
+    "max_bpm",
+    "avg_bpm",
+    "resting_bpm",
+    "session_duration",
+    "calories_burned",
+    "workout_type",
+    "water_intake",
+    "workout_frequency",
+    "experience_level",
+    "bmi",
+    "daily_meals_frequency",
+    "carbs",
+    "proteins",
+    "fats",
+    "calories",
+    "diet_type",
+    "sugar_g",
+    "fat_percentage",
+)
+
+MODEL_INPUT_FEATURES: tuple[str, ...] = RAW_FEATURES[:-1]
+
+ENCODED_FEATURES: tuple[str, ...] = (
+    "age",
+    "weight",
+    "height",
+    "max_bpm",
+    "avg_bpm",
+    "resting_bpm",
+    "session_duration",
+    "calories_burned",
+    "water_intake",
+    "workout_frequency",
+    "experience_level",
+    "bmi",
+    "daily_meals_frequency",
+    "carbs",
+    "proteins",
+    "fats",
+    "calories",
+    "sugar_g",
+    "gender_female",
+    "gender_male",
+    "workout_type_cardio",
+    "workout_type_hiit",
+    "workout_type_strength",
+    "workout_type_yoga",
+    "diet_type_balanced",
+    "diet_type_keto",
+    "diet_type_low-carb",
+    "diet_type_paleo",
+    "diet_type_vegan",
+    "diet_type_vegetarian",
+)
+
+FAT_CLASS_MAP: dict[int, str] = {
+    0: "low",
+    1: "mid",
+    2: "high",
+}
+#--------------------------------------------------------------------------------------------
