@@ -1,14 +1,3 @@
-# import copy
-# from datetime import datetime
-# from typing import Dict, Any, List
-
-# import numpy as np
-# import pandas as pd
-
-# from .model_service import ModelService
-# from config.logger import logger
-# from ml.loading_script import add_engineered_features
-
 import copy
 from datetime import datetime
 from typing import Dict, Any, List
@@ -20,6 +9,7 @@ from sqlalchemy.orm import Session
 from .model_service import ModelService
 from config.logger import logger
 from config.settings import settings
+from config import constants as cnsts
 from ml.loading_script import add_engineered_features
 from database.models import (
     PredictionHistory,
@@ -42,36 +32,11 @@ class PredictionService:
     6. Error handling for predictions
     """
     
+    MIN_FAT_PERCENTAGE = 5.0
+    MAX_FAT_PERCENTAGE = 40.0
+
     def __init__(self, model_service: ModelService):
         self.model_service = model_service
-        # self.history_service = history_service
-        self.features: List[str] = [ 
-            'age', 'gender', 'weight', 'height', 'max_bpm',
-            'avg_bpm', 'resting_bpm', 'session_duration',
-            'calories_burned', 'workout_type', 'water_intake',
-            'workout_frequency', 'experience_level', 'bmi',
-            'daily_meals_frequency', 'carbs', 'proteins',
-            'fats', 'calories', 'diet_type', 'sugar_g', 
-            'fat_percentage'
-        ]
-        self.input_features: List[str] = self.features[:-1] 
-
-        self._encoded_features_list = [
-            'age', 'weight', 'height', 'max_bpm', 'avg_bpm', 'resting_bpm',
-            'session_duration', 'calories_burned', 'water_intake',
-            'workout_frequency', 'experience_level', 'bmi', 'daily_meals_frequency',
-            'carbs', 'proteins', 'fats', 'calories', 'sugar_g', 'gender_female',
-            'gender_male', 'workout_type_cardio', 'workout_type_hiit',
-            'workout_type_strength', 'workout_type_yoga', 'diet_type_balanced',
-            'diet_type_keto', 'diet_type_low-carb', 'diet_type_paleo',
-            'diet_type_vegan', 'diet_type_vegetarian'
-        ]
-        
-        self.map_fat_class = {
-            0: 'low',
-            1: 'mid',
-            2: 'high'
-        }
                 
     def _get_bmi(self, data: Dict[str, Any]) -> Dict[str, Any]:
         data['bmi'] = float(data['weight']) / (float(data['height']))**2
@@ -86,7 +51,7 @@ class PredictionService:
         return X
 
     def _fill_missing_fields(self, df: pd.DataFrame) -> None:
-        for feature in self._encoded_features_list:
+        for feature in cnsts.ENCODED_FEATURES:
             if feature not in df.columns:
                 df[feature] = 0.0
 
@@ -95,14 +60,16 @@ class PredictionService:
         return df_encoded
 
     def _validate_input(self, user_data: Dict[str, Any]) -> pd.DataFrame:
-        """Orders features in the correct order, returns a pd.DataFrame"""    
         data_copy = copy.deepcopy(user_data)
-        # calculate bmi feature and add to input 
         data_copy = self._get_bmi(data=data_copy)
-        # reorder features in the way model was trained
-        data_reordered = self._reorder_features(data=data_copy, desired_order=self.input_features)
-        # convert to DataFrame
-        df = self._to_DataFrame(data=data_reordered, columns=self.input_features)
+        data_reordered = self._reorder_features(
+            data=data_copy,
+            desired_order=list(cnsts.MODEL_INPUT_FEATURES),
+        )
+        df = self._to_DataFrame(
+            data=data_reordered,
+            columns=list(cnsts.MODEL_INPUT_FEATURES),
+        )
         return df
 
     def _preprocess_features(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -125,7 +92,7 @@ class PredictionService:
         return final_preds
     
     def _get_fat_class_name(self, fat_class: int) -> str:
-        return self.map_fat_class[fat_class]
+        return cnsts.FAT_CLASS_MAP[fat_class]
 
     def _normalize_fat_percentage(self, fat_percentage: float) -> float:
         """
@@ -252,7 +219,7 @@ class PredictionService:
                 water_intake=user_data["water_intake"],
                 fat_class=self._to_fat_class_enum(result["fat_class"]),
                 fat_percentage=result["fat_percentage"],
-                model_version=settings.VERSION,
+                model_version=settings.MODEL_VERSION,
             )
 
             db.add(row)

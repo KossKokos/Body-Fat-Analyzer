@@ -27,8 +27,8 @@ class Application():
             log_file=settings.LOG_FILE if settings.LOG_TO_FILE else None
         )
         
-        self.app_logger = logger.logger.with_context(app="fat_percentage_predictor")
-        self.app_logger.info("Starting application", version="1.0.0")
+        self.app_logger = logger.logger.with_context(app=settings.PROJECT_NAME)
+        self.app_logger.info("Starting application", version=settings.PROJECT_VERSION)
 
     def _setup_middlewares(self):
         # Setup CORS
@@ -38,21 +38,20 @@ class Application():
             CORSMiddleware,
             allow_origins=settings.ALLOWED_ORIGINS,
             allow_credentials=True,
-            allow_methods=["POST", "GET", "OPTIONS"],  # Only allow needed methods
-            allow_headers=["X-API-Key", "Content-Type"],  # Only allow needed headers
-            expose_headers=["*"],
-            max_age=600,  # Cache preflight requests for 10 minutes
+            allow_methods=settings.ALLOW_METHODS,  
+            allow_headers=settings.ALLOW_HEADERS,  
+            expose_headers=settings.EXPOSE_HEADERS,
+            max_age=settings.MAX_AGE,
         )
 
         # Add security middlewares (order matters)
         self.application.add_middleware(SecurityHeadersMiddleware)
-        self.application.add_middleware(APIKeyMiddleware)  # This will validate API key on every request
+        self.application.add_middleware(APIKeyMiddleware)
 
-        # Optional: Add rate limiting in production
         if settings.ENVIRONMENT == "production":
-            app.add_middleware(RateLimitMiddleware, calls_per_minute=60)
+            app.add_middleware(RateLimitMiddleware, calls_per_minute=settings.CALLS_PER_MINUTE)
 
-        self.app_logger.info("Middlewares setted up successfully")
+        self.app_logger.info("Middlewares set up successfully")
 
     @asynccontextmanager
     async def _lifespan(self, app: FastAPI):
@@ -78,14 +77,14 @@ class Application():
         # Create FastAPI app
         self.application = FastAPI(
             title=settings.PROJECT_NAME,
-            version=settings.VERSION,
+            version=settings.PROJECT_VERSION,
             openapi_url="/api/openapi.json",
             docs_url="/docs" if settings.ENVIRONMENT == "development" else None,
             redoc_url="/redoc" if settings.DOCS else None,
             lifespan=self._lifespan,
         )
 
-        self.app_logger.info("Application created successfully")
+        self.app_logger.info("Application started successfully")
         return self.application
     
     def init_app(self):
@@ -99,9 +98,9 @@ application.init_app()
 app = application.application
 
 # Include routes 
-app.include_router(router=prediction_router, prefix='/api')
-app.include_router(router=feedback_router, prefix='/api')
-app.include_router(router=health_router, prefix='/api')
+app.include_router(router=prediction_router, prefix=settings.API_PREFIX)
+app.include_router(router=feedback_router, prefix=settings.API_PREFIX)
+app.include_router(router=health_router, prefix=settings.API_PREFIX)
 
 def main():
     import os 
@@ -112,7 +111,7 @@ def main():
     uvicorn.run(
         settings.APP_MAIN,
         host=settings.APP_HOST,
-        port=int(settings.APP_PORT), # type: ignore
+        port=int(settings.APP_PORT), 
         reload=settings.DEBUG,
         log_level=settings.LOG_LEVEL.lower(),
     )

@@ -26,12 +26,7 @@ def main() -> int:
     load_dotenv()
 
     base_url = os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip("/")
-    api_key = require_env("API_KEY")
-
-    headers = {
-        "X-API-Key": api_key,
-        "Content-Type": "application/json",
-    }
+    url = f"{base_url}/api/predict/"
 
     payload = {
         "age": 30,
@@ -56,16 +51,51 @@ def main() -> int:
         "water_intake": 2.5,
     }
 
-    url = f"{base_url}/api/predict/"
+    valid_api_key = require_env("API_KEY")
+    invalid_api_key = "wrong-api-key"
 
-    try:
-        response = requests.post(url, headers=headers, json=payload, timeout=20)
-        print(f"Status: {response.status_code}")
-        print(get_json_or_text(response))
-        return 0 if 200 <= response.status_code < 300 else 1
-    except requests.RequestException as exc:
-        print(f"Request failed: {exc}")
-        return 1
+    valid_headers = {
+        "X-API-Key": valid_api_key,
+        "Content-Type": "application/json",
+    }
+    invalid_headers = {
+        "X-API-Key": invalid_api_key,
+        "Content-Type": "application/json",
+    }
+
+    def run_valid_key_test() -> bool:
+        try:
+            response = requests.post(url, headers=valid_headers, json=payload, timeout=20)
+            print("=== Valid API key test ===")
+            print(f"Status: {response.status_code}")
+            print(get_json_or_text(response))
+            return 200 <= response.status_code < 300
+        except requests.RequestException as exc:
+            print("=== Valid API key test ===")
+            print(f"Request failed: {exc}")
+            return False
+
+    def run_invalid_key_test() -> bool:
+        try:
+            response = requests.post(url, headers=invalid_headers, json=payload, timeout=20)
+            print("=== Invalid API key test ===")
+            print(f"Status: {response.status_code}")
+            print(get_json_or_text(response))
+            return response.status_code in (401, 403)
+        except requests.RequestException as exc:
+            print("=== Invalid API key test ===")
+            print(f"Request failed: {exc}")
+            return False
+
+    valid_ok = run_valid_key_test()
+    invalid_ok = run_invalid_key_test()
+
+    if valid_ok and invalid_ok:
+        print("All prediction endpoint tests passed.")
+        return 0
+
+    print("One or more prediction endpoint tests failed.")
+    return 1
 
 
 if __name__ == "__main__":

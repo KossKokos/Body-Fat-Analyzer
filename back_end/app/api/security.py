@@ -1,7 +1,7 @@
 from collections import defaultdict, deque
 from typing import Deque, Dict
 
-from fastapi import Request, HTTPException
+from fastapi import Request
 from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -20,20 +20,16 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         # Skip API key check for OPTIONS requests (CORS preflight)
         if request.method == "OPTIONS":
             return await call_next(request)
-        
-        # Get API key from header
+
         api_key = request.headers.get("X-API-Key")
-        
-        # Validate API key
+
         if not api_key or api_key != settings.API_KEY:
-            raise HTTPException(
+            return JSONResponse(
                 status_code=403,
-                detail="Forbidden"
+                content={"detail": "Forbidden"},
             )
-        
-        # Process request
-        response = await call_next(request)
-        return response
+
+        return await call_next(request)
 
 class TrustedHostMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):

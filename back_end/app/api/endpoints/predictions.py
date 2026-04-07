@@ -3,8 +3,6 @@ from sqlalchemy.orm import Session
 
 from core.schemas import PredictionRequest, PredictionResponse
 from api.dependencies import get_db
-from services.model_service import ModelService
-from services.prediction_service import PredictionService
 from api.dependencies import get_prediction_service
 
 router = APIRouter(prefix="/predict")

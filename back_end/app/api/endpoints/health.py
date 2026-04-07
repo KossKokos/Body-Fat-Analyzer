@@ -3,21 +3,20 @@ from sqlalchemy import text, bindparam
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from api.dependencies import get_db, verify_api_key
+from api.dependencies import get_db
 from config.settings import settings
 
 router = APIRouter(prefix="/health", tags=["health"])
 
 
 @router.get("/")
-def app_health_check(_: str = Depends(verify_api_key)):
+def app_health_check():
     return {"status": "ok"}
 
 
 @router.get("/db")
 def db_health_check(
     db: Session = Depends(get_db),
-    _: str = Depends(verify_api_key),
 ):
 
     try:

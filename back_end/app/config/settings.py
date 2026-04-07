@@ -19,7 +19,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    #  Database
+    # DB CREDENTIALS
     POSTGRES_DB: str = ""
     POSTGRES_USER: str = ""
     POSTGRES_PASSWORD: str = ""
@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str = ""
     SQLALCHEMY_DATABASE_URL: str = ""
 
+    # DB ATTRIBUTES
     DB_SSL_MODE: str = ""
     DB_POOL_PRE_PING: bool = True
     DB_POOL_SIZE: int = 5
@@ -34,32 +35,49 @@ class Settings(BaseSettings):
     DB_POOL_RECYCLE: int = 1800
     DB_ECHO: bool = False
 
-    # DB instances
+    # DB INSTANCES
     REQUIRED_TABLES: List[str] = []
+    
     # APP START UP
     APP_MAIN: str = ""
     APP_HOST: str = ""
     APP_PORT: str = ""
 
-    PROJECT_NAME: str = "Body_Fat_Percentage_Predictor"
-    VERSION: str = "1.0.0"
+    # PROJECT INIT
+    PROJECT_NAME: str = ""
+    PROJECT_VERSION: str = ""
 
+    # DEVELOPMENT
     ENVIRONMENT: str = ""
     DEBUG: bool = False
     DOCS: bool = False
 
+    # URLS
     API_V1_STR: str = ""
+    API_PREFIX: str = ""
     FRONTEND_URL: str = ""
+    API_PREFIX: str = ""
+    
+    # API SECURITY
     API_KEY: str = ""
-
     ALLOWED_ORIGINS: List[str] = []
     ALLOWED_HOSTS: List[str] = []
+    ALLOW_METHODS: List[str] = []
+    ALLOW_HEADERS: List[str] = []
+    EXPOSE_HEADERS: List[str] = []
+    MAX_AGE: int = 800
+    CALLS_PER_MINUTE: int = 100
 
+    # LOGGER
     LOG_LEVEL: str = "INFO"
     LOG_JSON: bool = False
     LOG_TO_FILE: bool = False
     LOG_FILE: Optional[str] = "logs/app.log"
 
+    # MODEL INFO
+    MODEL_VERSION: str = ""
+
+    # MODELS LOCATION
     BASE_DIR: Path = Path(__file__).parent.parent.parent
     MODELS_DIR: Path = BASE_DIR / "app" / "models"
     DATA_DIR: Path = BASE_DIR / "data"
