@@ -9,27 +9,59 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [showResults, setShowResults] = useState(false);
 
-  const handlePrediction = async (formData) => {
-    setLoading(true);
-    setError(null);
+  // const handlePrediction = async (formData) => {
+  //   setLoading(true);
+  //   setError(null);
     
-    try {
-      const result = await predictFatPercentage(formData);
-      setPrediction(result);
-      setShowResults(true);
+  //   try {
+  //     const result = await predictFatPercentage(formData);
+  //     setPrediction(result);
+  //     setShowResults(true);
       
-      // Scroll to results
-      setTimeout(() => {
-        document.getElementById('results-section')?.scrollIntoView({ 
-          behavior: 'smooth' 
-        });
-      }, 100);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     // Scroll to results
+  //     setTimeout(() => {
+  //       document.getElementById('results-section')?.scrollIntoView({ 
+  //         behavior: 'smooth' 
+  //       });
+  //     }, 100);
+  //   } catch (err) {
+  //     setError(err.message);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+const handlePrediction = async (formData) => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    const payload = {
+      ...formData,
+      workout_frequency: Number(formData.workout_frequency),
+      daily_meals_frequency: Number(formData.daily_meals_frequency),
+      water_intake: Number(formData.water_intake),
+      carbs: Number(formData.carbs),
+      proteins: Number(formData.proteins),
+      fats: Number(formData.fats),
+      sugar_g: Number(formData.sugar_g),
+    };
+
+    const result = await predictFatPercentage(payload);
+    setPrediction(result);
+    setShowResults(true);
+
+    setTimeout(() => {
+      document.getElementById('results-section')?.scrollIntoView({
+        behavior: 'smooth'
+      });
+    }, 100);
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleNewPrediction = () => {
     setShowResults(false);
