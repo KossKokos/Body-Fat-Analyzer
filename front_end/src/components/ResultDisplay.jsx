@@ -4,6 +4,27 @@ import { TrendingUp, TrendingDown, Activity, Heart, Flame, Droplets } from 'luci
 const ResultDisplay = ({ prediction, onNewPrediction }) => {  // Add onNewPrediction prop
   const { fat_class, fat_percentage, confidence, timestamp } = prediction;
   const classInfo = FAT_CLASS_INFO[fat_class];
+
+  const StarRating = ({ value = 0, onSelect, disabled = false }) => {
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          disabled={disabled}
+          onClick={() => onSelect?.(star)}
+          className={`text-2xl transition ${
+            star <= value ? "text-yellow-400" : "text-gray-300"
+          } ${disabled ? "cursor-default" : "hover:scale-110"}`}
+          aria-label={`Rate ${star} out of 5`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+};
   
   return (
     <div className="space-y-6">
@@ -39,6 +60,13 @@ const ResultDisplay = ({ prediction, onNewPrediction }) => {  // Add onNewPredic
           <div className="text-5xl font-bold mb-2">{fat_percentage.toFixed(1)}%</div>
           <p className="text-gray-600">Body Fat Percentage</p>
           <p className="text-sm text-gray-500 mt-2">{classInfo.description}</p>
+        </div>
+     
+        <div className="mt-4">
+          <p className="mb-2 text-sm text-gray-600">
+            Want to rate this prediction?
+          </p>
+          <StarRating value={selectedStars} onSelect={onStarSelect} disabled={feedbackSubmitted} />
         </div>
       </div>
 

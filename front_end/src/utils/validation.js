@@ -230,3 +230,34 @@ export const calculateTDEE = (age, gender, weight, height, activityLevel) => {
 
   return Math.round(bmr * (activityMultipliers[activityLevel] || 1.2));
 };
+
+export const feedbackSchema = yup.object({
+  rating: yup
+    .number()
+    .min(0, "Rating must be at least 0")
+    .max(10, "Rating must be at most 10")
+    .required("Rating is required"),
+
+  is_prediction_close: yup
+    .mixed()
+    .oneOf([true, false, null], "Please choose yes or no, or leave it blank")
+    .nullable(),
+
+  actual_fat_percentage: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === "" ? null : value
+    )
+    .nullable()
+    .min(0, "Actual body fat percentage must be at least 0")
+    .max(100, "Actual body fat percentage must be at most 100"),
+
+  comment: yup
+    .string()
+    .max(2000, "Comment must be 2000 characters or less")
+    .nullable(),
+
+  consent_to_retrain: yup
+    .boolean()
+    .default(false),
+});

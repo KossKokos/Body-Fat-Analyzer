@@ -81,3 +81,19 @@ export const DEFAULT_FORM_VALUES = {
   daily_meals_frequency: '',
   water_intake: '',
 };
+
+export const DEFAULT_FEEDBACK_VALUES = {
+  rating: 0,
+  is_prediction_close: null,
+  actual_fat_percentage: "",
+  comment: "",
+  consent_to_retrain: false,
+};
+
+export const STAR_RATING_TO_API_RATING = {
+  1: 2,
+  2: 4,
+  3: 6,
+  4: 8,
+  5: 10,
+};
