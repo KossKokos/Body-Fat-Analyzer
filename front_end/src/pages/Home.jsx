@@ -9,28 +9,6 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [showResults, setShowResults] = useState(false);
 
-  // const handlePrediction = async (formData) => {
-  //   setLoading(true);
-  //   setError(null);
-    
-  //   try {
-  //     const result = await predictFatPercentage(formData);
-  //     setPrediction(result);
-  //     setShowResults(true);
-      
-  //     // Scroll to results
-  //     setTimeout(() => {
-  //       document.getElementById('results-section')?.scrollIntoView({ 
-  //         behavior: 'smooth' 
-  //       });
-  //     }, 100);
-  //   } catch (err) {
-  //     setError(err.message);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
 const handlePrediction = async (formData) => {
   setLoading(true);
   setError(null);

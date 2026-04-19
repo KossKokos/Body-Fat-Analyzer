@@ -5,26 +5,6 @@ const ResultDisplay = ({ prediction, onNewPrediction }) => {  // Add onNewPredic
   const { fat_class, fat_percentage, confidence, timestamp } = prediction;
   const classInfo = FAT_CLASS_INFO[fat_class];
   
-  const getRecommendation = () => {
-    switch(fat_class) {
-      case 'low':
-        return "Excellent! Your body fat percentage is in the healthy range. Maintain your current lifestyle with balanced nutrition and regular exercise.";
-      case 'mid':
-        return "Good progress! Consider adding more cardio and strength training to your routine to reach optimal levels.";
-      case 'high':
-        return "Focus on creating a sustainable calorie deficit through diet modifications and increased physical activity. Consider consulting a nutritionist.";
-      default:
-        return "";
-    }
-  };
-
-  const getHeartRateInsight = () => {
-    const restingBpm = prediction.resting_bpm;
-    if (restingBpm < 60) return "Excellent resting heart rate!";
-    if (restingBpm < 70) return "Good resting heart rate.";
-    return "Consider cardio training to improve heart health.";
-  };
-
   return (
     <div className="space-y-6">
       {/* Main Result Card */}
