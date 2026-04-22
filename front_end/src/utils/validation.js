@@ -209,24 +209,34 @@ export const predictionSchema = yup.object({
   }),
 });
 
-export const calculateBMI = (weight, height) => {
-  return (weight / (height * height)).toFixed(1);
-};
 
-export const calculateTDEE = (age, gender, weight, height, activityLevel) => {
-  let bmr;
+export const feedbackSchema = yup.object({
+  rating: yup
+    .number()
+    .min(0, "Rating must be at least 0")
+    .max(10, "Rating must be at most 10")
+    .required("Rating is required"),
 
-  if (gender === "male") {
-    bmr = 10 * weight + 6.25 * (height * 100) - 5 * age + 5;
-  } else {
-    bmr = 10 * weight + 6.25 * (height * 100) - 5 * age - 161;
-  }
+  is_prediction_close: yup
+    .mixed()
+    .oneOf([true, false, null], "Please choose yes or no, or leave it blank")
+    .nullable(),
 
-  const activityMultipliers = {
-    sedentary: 1.2,
-    moderate: 1.55,
-    active: 1.9,
-  };
+  actual_fat_percentage: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === "" ? null : value
+    )
+    .nullable()
+    .min(0, "Actual body fat percentage must be at least 0")
+    .max(100, "Actual body fat percentage must be at most 100"),
 
-  return Math.round(bmr * (activityMultipliers[activityLevel] || 1.2));
-};
+  comment: yup
+    .string()
+    .max(2000, "Comment must be 2000 characters or less")
+    .nullable(),
+
+  consent_to_retrain: yup
+    .boolean()
+    .default(false),
+});

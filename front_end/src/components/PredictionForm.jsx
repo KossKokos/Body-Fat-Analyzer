@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { predictionSchema, calculateBMI } from "../utils/validation";
+import { calculateBMI } from "../utils/formHelpers";
+import { predictionSchema} from "../utils/validation";
 import {
   DEFAULT_FORM_VALUES,
   WORKOUT_TYPES,
@@ -478,26 +479,10 @@ const PredictionForm = ({ onSubmit, loading }) => {
               ) : (
                 <>
                   🔬 Predict Body Fat
-                  {/* <span className="text-sm font-normal ml-2 opacity-90">(20+ metrics)</span> */}
                 </>
               )}
             </button>
           </div>
-
-          {/* <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs text-gray-500">
-            <div className="bg-gray-50 p-2 rounded">
-              <div className="font-medium">Accuracy</div>
-              <div className="text-primary-600 font-bold">95%+</div>
-            </div>
-            <div className="bg-gray-50 p-2 rounded">
-              <div className="font-medium">Processing</div>
-              <div className="text-primary-600 font-bold">3-5 seconds</div>
-            </div>
-            <div className="bg-gray-50 p-2 rounded">
-              <div className="font-medium">Data Points</div>
-              <div className="text-primary-600 font-bold">20+</div>
-            </div>
-          </div> */}
         </div>
       </div>
     </form>
