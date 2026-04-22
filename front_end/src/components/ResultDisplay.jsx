@@ -1,6 +1,7 @@
-import { FAT_CLASS_INFO } from "../utils/constants";
 import { Activity } from "lucide-react";
 
+import { FAT_CLASS_INFO } from "../utils/constants";
+import { downloadPredictionReport } from "../utils/downloadHelper"
 // Displays the clickable star rating shown next to the prediction result.
 // Can be disabled after feedback is submitted to prevent repeated interaction.
 const StarRating = ({ value = 0, onSelect, disabled = false }) => {
@@ -91,19 +92,14 @@ const ResultDisplay = ({
         </button>
 
         <button
-          onClick={() => {
-            const dataStr = JSON.stringify(prediction, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `fat-prediction-${new Date().toISOString().split("T")[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          }}
-          className="btn-primary flex-1 py-3"
+          onClick={() =>
+            downloadPredictionReport({
+              fatClassLabel: classInfo.label,
+              fatPercentage: prediction.fat_percentage,
+              timestamp: prediction.timestamp,
+            })
+          }
+            className="btn-primary flex-1 py-3"
         >
           💾 Download Results
         </button>

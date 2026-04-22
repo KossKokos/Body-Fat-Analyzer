@@ -129,12 +129,13 @@ const Home = () => {
     <div className="max-w-6xl mx-auto">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          🏥 Advanced Body Fat Percentage Predictor
+          🏥 Body Fat Percentage Predictor Portfolio Project
         </h1>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          Get a comprehensive body fat analysis using our advanced machine
-          learning model. Fill in your complete health and fitness profile for
-          the most accurate prediction.
+          This is a portfolio project built to demonstrate full-stack
+          development, machine learning integration, and frontend/backend
+          engineering. It provides estimated body fat predictions based on
+          user-entered data and is intended for demonstration purposes only.
         </p>
       </div>
 
