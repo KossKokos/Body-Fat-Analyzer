@@ -1,9 +1,3 @@
-export const ACTIVITY_LEVELS = [
-  { value: 'sedentary', label: 'Sedentary (little or no exercise)' },
-  { value: 'moderate', label: 'Moderate (exercise 3-4 times/week)' },
-  { value: 'active', label: 'Active (exercise 5+ times/week)' },
-];
-
 export const WORKOUT_TYPES = [
   { value: 'cardio', label: 'Cardio' },
   { value: 'hiit', label: 'HIIT' },

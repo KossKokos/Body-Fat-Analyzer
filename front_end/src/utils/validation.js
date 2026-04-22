@@ -209,27 +209,6 @@ export const predictionSchema = yup.object({
   }),
 });
 
-export const calculateBMI = (weight, height) => {
-  return (weight / (height * height)).toFixed(1);
-};
-
-export const calculateTDEE = (age, gender, weight, height, activityLevel) => {
-  let bmr;
-
-  if (gender === "male") {
-    bmr = 10 * weight + 6.25 * (height * 100) - 5 * age + 5;
-  } else {
-    bmr = 10 * weight + 6.25 * (height * 100) - 5 * age - 161;
-  }
-
-  const activityMultipliers = {
-    sedentary: 1.2,
-    moderate: 1.55,
-    active: 1.9,
-  };
-
-  return Math.round(bmr * (activityMultipliers[activityLevel] || 1.2));
-};
 
 export const feedbackSchema = yup.object({
   rating: yup

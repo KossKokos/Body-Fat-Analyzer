@@ -1,5 +1,3 @@
-import React from "react";
-
 const FeedbackPrompt = ({ isOpen, onYes, onNo, onClose }) => {
   if (!isOpen) return null;
 
@@ -12,7 +10,7 @@ const FeedbackPrompt = ({ isOpen, onYes, onNo, onClose }) => {
               Would you like to leave feedback?
             </h3>
             <p className="mt-2 text-sm text-gray-600">
-              Your feedback helps us improve the prediction experience.
+              Your feedback helps us improve future predictions.
             </p>
           </div>
 
@@ -34,7 +32,6 @@ const FeedbackPrompt = ({ isOpen, onYes, onNo, onClose }) => {
           >
             Yes
           </button>
-
           <button
             type="button"
             onClick={onNo}
