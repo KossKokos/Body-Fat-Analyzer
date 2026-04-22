@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { predictionSchema, calculateBMI } from "../utils/validation";
+import { calculateBMI } from "../utils/formHelpers";
+import { predictionSchema} from "../utils/validation";
 import {
   DEFAULT_FORM_VALUES,
   WORKOUT_TYPES,

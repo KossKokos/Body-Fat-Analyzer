@@ -1,9 +1,3 @@
-export const ACTIVITY_LEVELS = [
-  { value: 'sedentary', label: 'Sedentary (little or no exercise)' },
-  { value: 'moderate', label: 'Moderate (exercise 3-4 times/week)' },
-  { value: 'active', label: 'Active (exercise 5+ times/week)' },
-];
-
 export const WORKOUT_TYPES = [
   { value: 'cardio', label: 'Cardio' },
   { value: 'hiit', label: 'HIIT' },
@@ -80,4 +74,20 @@ export const DEFAULT_FORM_VALUES = {
   diet_type: 'balanced',
   daily_meals_frequency: '',
   water_intake: '',
+};
+
+export const DEFAULT_FEEDBACK_VALUES = {
+  rating: 0,
+  is_prediction_close: null,
+  actual_fat_percentage: "",
+  comment: "",
+  consent_to_retrain: false,
+};
+
+export const STAR_RATING_TO_API_RATING = {
+  1: 2,
+  2: 4,
+  3: 6,
+  4: 8,
+  5: 10,
 };
