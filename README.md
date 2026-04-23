@@ -191,9 +191,7 @@ This notebook covers the model development side of the project, while the applic
 
 ```text
 Fitness_Proj
-├── .gitignore
 ├── back_end
-│   ├── .env
 │   ├── .env.example
 │   ├── app
 │   │   ├── alembic
@@ -209,7 +207,6 @@ Fitness_Proj
 │   │   └── utils
 │   └── requirements.txt
 ├── front_end
-│   ├── .env
 │   ├── .env.example
 │   ├── public
 │   ├── src
@@ -229,7 +226,7 @@ Fitness_Proj
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/KossKokos/Body-Fat-Analyzer
 cd Fitness_Proj
 ```
 
