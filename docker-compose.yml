@@ -1,0 +1,101 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: fitness_proj_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./back_end
+      dockerfile: Dockerfile
+    container_name: fitness_proj_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PROJECT_NAME: ${PROJECT_NAME}
+      PROJECT_VERSION: ${PROJECT_VERSION}
+
+      APP_MAIN: ${APP_MAIN}
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+
+      API_V1_STR: ${API_V1_STR}
+      APP_BASE_URL: ${APP_BASE_URL}
+      API_PREFIX: ${API_PREFIX}
+
+      API_KEY: ${API_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      ALLOW_METHODS: ${ALLOW_METHODS}
+      ALLOW_HEADERS: ${ALLOW_HEADERS}
+      EXPOSE_HEADERS: ${EXPOSE_HEADERS}
+      MAX_AGE: ${MAX_AGE}
+      CALLS_PER_MINUTE: ${CALLS_PER_MINUTE}
+
+      ENVIRONMENT: ${ENVIRONMENT}
+      DEBUG: ${DEBUG}
+      DOCS: ${DOCS}
+
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+
+      SQLALCHEMY_DATABASE_URL: ${SQLALCHEMY_DATABASE_URL}
+
+      DB_SSL_MODE: ${DB_SSL_MODE}
+      DB_POOL_PRE_PING: ${DB_POOL_PRE_PING}
+      DB_POOL_SIZE: ${DB_POOL_SIZE}
+      DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW}
+      DB_POOL_RECYCLE: ${DB_POOL_RECYCLE}
+      DB_ECHO: ${DB_ECHO}
+
+      REQUIRED_TABLES: ${REQUIRED_TABLES}
+      MODEL_VERSION: ${MODEL_VERSION}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS -H \"X-API-Key: $$API_KEY\" http://127.0.0.1:8000/api/health/ >/dev/null || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build:
+      context: ./front_end
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_API_KEY: ${VITE_API_KEY}
+    container_name: fitness_proj_frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+
+volumes:
+  postgres_data:

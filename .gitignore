@@ -140,3 +140,17 @@ Desktop.ini
 # =========================
 .cache/
 front_end/.env
+
+# =========================
+# Docker
+# =========================
+.env.docker
+.env.docker.*
+!.env.docker.example
+
+# Optional local-only compose override
+docker-compose.override.yml
+
+# Optional local Docker artifacts
+.docker/
+docker-data/

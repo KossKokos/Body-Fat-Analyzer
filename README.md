@@ -15,7 +15,7 @@ This project estimates body fat percentage from user-entered health, fitness, an
 
 I wanted to build something that shows more than just model training in a notebook.
 
-This project was designed to reflect the full path from data science work to an actual application:
+This project was built to reflect the full path from data science work to an actual application:
 
 - working with a real dataset
 - analysing, cleaning, and preparing the data
@@ -61,7 +61,8 @@ For me, the value of the project is that it connects machine learning work with 
 - API key handling for protected endpoints
 - separation of concerns across frontend, backend, database, and ML services
 - Docker-based local PostgreSQL setup
-- project structure prepared for containerisation and cleaner deployment
+- full containerisation with Docker Compose
+- project structure prepared for cleaner local setup and deployment
 
 ---
 
@@ -89,7 +90,7 @@ This structure reflects an important part of the project: thinking about ML syst
 User
   │
   ▼
-React Frontend (Vite)
+React Frontend (Vite / Nginx)
   │
   │  POST /api/predict/
   │  POST /api/feedback/
@@ -108,10 +109,6 @@ FastAPI Backend
   │     └── prediction_feedback
   │
   └── Alembic migrations
-
-Local infrastructure:
-- PostgreSQL runs in Docker
-- models are stored locally inside the project
 ```
 
 ---
@@ -134,7 +131,7 @@ Local infrastructure:
 - Alembic
 - psycopg2
 - Pydantic
-- Docker (PostgreSQL in local development)
+- Docker
 
 ### Frontend
 - React
@@ -144,6 +141,7 @@ Local infrastructure:
 - Yup
 - Axios
 - Tailwind CSS
+- Nginx (for the containerised frontend build)
 
 ---
 
@@ -179,11 +177,12 @@ This notebook covers the model development side of the project, while the applic
 - feedback storage in the database
 - user-facing About, Privacy Policy, and Terms pages
 - clean result download/export
-- “new prediction” reset flow
+- new prediction reset flow
 - route-based frontend navigation
 - API key protected backend routes
 - minimal health check behavior
 - environment-based configuration
+- full Docker Compose setup for frontend, backend, and database
 
 ---
 
@@ -191,14 +190,18 @@ This notebook covers the model development side of the project, while the applic
 
 ```text
 Fitness_Proj
+├── .gitignore
 ├── back_end
 │   ├── .env.example
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   ├── app
 │   │   ├── alembic
 │   │   ├── api
 │   │   ├── config
 │   │   ├── core
 │   │   ├── database
+│   │   ├── docker
 │   │   ├── main.py
 │   │   ├── ml
 │   │   ├── models
@@ -208,6 +211,9 @@ Fitness_Proj
 │   └── requirements.txt
 ├── front_end
 │   ├── .env.example
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   ├── nginx.conf
 │   ├── public
 │   ├── src
 │   │   ├── api
@@ -216,6 +222,8 @@ Fitness_Proj
 │   │   └── utils
 │   ├── package.json
 │   └── vite.config.js
+├── docker-compose.yml
+├── .env.docker.example
 └── model_training.ipynb
 ```
 
@@ -296,8 +304,6 @@ front_end/.env
 
 You can start from `.env.example`.
 
-
-
 #### Run the frontend
 
 ```bash
@@ -308,12 +314,98 @@ npm run dev
 
 ### 4. Database
 
-PostgreSQL is currently run in Docker for local development.
+PostgreSQL can be run through Docker in local development.
 
-At the moment:
-- **PostgreSQL is containerised**
-- the rest of the application is planned to be dockerised next
+---
 
+## Docker
+
+The project can also be run as a fully containerised stack using Docker Compose.
+
+This setup includes:
+
+- **PostgreSQL** as a dedicated database container
+- **FastAPI** as the backend API and model inference service
+- **React frontend** built with Vite and served through **Nginx**
+- **Alembic migrations** applied automatically during backend startup
+
+### Why Docker was added
+
+This project originally worked outside full containerisation. Docker was added to make the application easier to start, easier to share, and closer to a real deployment workflow.
+
+Containerising the stack also helped with:
+
+- keeping the services clearly separated
+- avoiding hidden local dependencies
+- making database setup more consistent
+- running migrations in a predictable way
+- showing deployment awareness as part of the project
+
+### Container structure
+
+The Docker setup uses three services:
+
+- **db** → PostgreSQL database
+- **backend** → FastAPI application with model loading and Alembic migrations
+- **frontend** → production build of the React app served by Nginx
+
+### Docker environment configuration
+
+Docker uses a dedicated environment file:
+
+```text
+.env.docker
+```
+
+A safe template version is included in the repository:
+
+```text
+.env.docker.example
+```
+
+Real secret values should be stored only in the local `.env.docker` file and should not be committed.
+
+### Run with Docker
+
+From the project root:
+
+```bash
+docker compose --env-file .env.docker up --build
+```
+
+### Default ports
+
+- **Frontend:** `http://localhost:8080`
+- **Backend:** `http://localhost:8000`
+- **PostgreSQL:** `localhost:5433`
+
+### Notes about backend startup
+
+Inside Docker, the backend is not started with the local Windows command:
+
+```bash
+py back_end/app/main.py
+```
+
+Instead, the container starts the backend using a Linux-friendly runtime command through an entrypoint script. That entrypoint:
+
+1. waits for PostgreSQL to become available
+2. applies Alembic migrations
+3. starts the FastAPI app with Uvicorn
+
+This makes startup more reliable and better suited for containerised environments.
+
+### What Docker adds to the project
+
+Adding Docker to the project shows that the application is not only built and working locally, but can also be packaged into a cleaner and more portable environment.
+
+From a portfolio point of view, this helps show:
+
+- deployment awareness
+- container-based service separation
+- reproducible local setup
+- cleaner database handling
+- more realistic full-stack project structure
 
 
 ## Testing
@@ -353,20 +445,8 @@ This is still a portfolio project, but I wanted the code structure to reflect re
 
 ---
 
-## Current Docker status
-
-Current state:
-- PostgreSQL runs in Docker in local development
-
-Planned next step:
-- dockerise the full project so backend, frontend, and database can be run in a more reproducible setup
-
----
-
 ## What I would improve next
 
-- full Docker setup for the complete stack
-- deployment-ready container orchestration
 - stronger separation of training artifacts vs application runtime assets
 - deeper model evaluation reporting
 - richer monitoring/logging around prediction usage
@@ -379,12 +459,14 @@ Planned next step:
 This project is hosted as a portfolio piece so employers and reviewers can see the system working as a real application rather than only reading about the model.
 
 It is meant to show:
+
 - practical data science thinking
 - reusable ML pipeline design
 - backend integration of machine learning
 - relational database awareness
 - API and frontend integration
 - full-stack engineering discipline
+- Docker and containerisation awareness
 
 ---
 
