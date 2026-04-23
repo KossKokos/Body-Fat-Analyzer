@@ -11,6 +11,16 @@ This project estimates body fat percentage from user-entered health, fitness, an
 
 ---
 
+## Quick links
+
+- [Why I built this project](#why-i-built-this-project)
+- [What this project proves](#what-this-project-proves)
+- [Machine learning approach](#machine-learning-approach)
+- [Tech stack](#tech-stack)
+- [Local setup](#local-setup)
+- [Docker](#docker)
+- [Portfolio context](#portfolio-context)
+
 ## Why I built this project
 
 I wanted to build something that shows more than just model training in a notebook.
