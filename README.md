@@ -4,9 +4,9 @@ A full-stack machine learning project built to take a prediction pipeline beyond
 
 This project estimates body fat percentage from user-entered health, fitness, and nutrition data. It combines a machine learning pipeline with a FastAPI backend, a PostgreSQL database, and a React frontend, so the result is not just a trained model, but a complete usable system.
 
-> **Important note**
-> This is a portfolio project for demonstration purposes only.
-> It is not a medical product and does not provide medical advice, diagnosis, or treatment.
+> **Important note**  
+> This is a portfolio project for demonstration purposes only.  
+> It is not a medical product and does not provide medical advice, diagnosis, or treatment.  
 > Any result returned by the app is an estimate and should not be treated as a clinical measurement.
 
 ---
@@ -112,3 +112,301 @@ FastAPI Backend
 Local infrastructure:
 - PostgreSQL runs in Docker
 - models are stored locally inside the project
+```
+
+---
+
+## Tech stack
+
+### Data science / model development
+- Python
+- pandas
+- numpy
+- matplotlib
+- seaborn
+- TensorFlow
+- statsmodels
+
+### Backend
+- FastAPI
+- SQLAlchemy
+- PostgreSQL
+- Alembic
+- psycopg2
+- Pydantic
+- Docker (PostgreSQL in local development)
+
+### Frontend
+- React
+- JavaScript
+- Vite
+- React Hook Form
+- Yup
+- Axios
+- Tailwind CSS
+
+---
+
+## Dataset
+
+This project uses a public dataset from Kaggle:
+
+**Lifestyle Data**  
+https://www.kaggle.com/datasets/jockeroika/life-style-data
+
+---
+
+## Model training
+
+Model training and experimentation are documented in:
+
+```text
+model_training.ipynb
+```
+
+This notebook covers the model development side of the project, while the application code shows how that work is turned into a reusable full-stack system.
+
+---
+
+## Completed features
+
+- prediction form with validation
+- backend prediction endpoint
+- reusable model loading and inference pipeline
+- prediction result display
+- prediction history persistence
+- optional feedback flow after prediction
+- feedback storage in the database
+- user-facing About, Privacy Policy, and Terms pages
+- clean result download/export
+- “new prediction” reset flow
+- route-based frontend navigation
+- API key protected backend routes
+- minimal health check behavior
+- environment-based configuration
+
+---
+
+## Repository structure
+
+```text
+Fitness_Proj
+├── .gitignore
+├── back_end
+│   ├── .env
+│   ├── .env.example
+│   ├── app
+│   │   ├── alembic
+│   │   ├── api
+│   │   ├── config
+│   │   ├── core
+│   │   ├── database
+│   │   ├── main.py
+│   │   ├── ml
+│   │   ├── models
+│   │   ├── services
+│   │   ├── tests
+│   │   └── utils
+│   └── requirements.txt
+├── front_end
+│   ├── .env
+│   ├── .env.example
+│   ├── public
+│   ├── src
+│   │   ├── api
+│   │   ├── components
+│   │   ├── pages
+│   │   └── utils
+│   ├── package.json
+│   └── vite.config.js
+└── model_training.ipynb
+```
+
+---
+
+## Local setup
+
+### 1. Clone the repository
+
+```bash
+git clone <your-repository-url>
+cd Fitness_Proj
+```
+
+---
+
+### 2. Backend setup
+
+Move into the backend project:
+
+```bash
+cd back_end
+```
+
+Create and activate a virtual environment if needed, then install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+#### Backend environment file
+
+Create a `.env` file in:
+
+```text
+back_end/.env
+```
+
+You can start from `.env.example`.
+
+#### Run the backend
+
+From `back_end/app`:
+
+```bash
+py main.py
+```
+
+Or from the repository root:
+
+```bash
+py back_end/app/main.py
+```
+
+---
+
+### 3. Frontend setup
+
+Move into the frontend project:
+
+```bash
+cd front_end
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+#### Frontend environment file
+
+Create a `.env` file in:
+
+```text
+front_end/.env
+```
+
+You can start from `.env.example`.
+
+
+
+#### Run the frontend
+
+```bash
+npm run dev
+```
+
+---
+
+### 4. Database
+
+PostgreSQL is currently run in Docker for local development.
+
+At the moment:
+- **PostgreSQL is containerised**
+- the rest of the application is planned to be dockerised next
+
+
+
+## Testing
+
+Backend test scripts are located in:
+
+```text
+back_end/app/tests/
+```
+
+Available scripts include:
+- `health_test.py`
+- `predict_test.py`
+- `feedback_test.py`
+
+These are lightweight endpoint checks used during development to verify:
+- health endpoint behavior
+- prediction request flow
+- feedback request flow
+
+---
+
+## Security-minded decisions in the project
+
+This project includes several practical security and application-quality decisions:
+
+- API key checks on backend requests
+- strict request validation with Pydantic
+- controlled backend error responses
+- environment-based configuration instead of hard-coded secrets
+- minimal health endpoint responses
+- separate frontend and backend services
+- awareness that frontend-exposed API keys are not real security on their own
+- database-backed persistence instead of temporary in-memory-only flows for prediction history and feedback
+
+This is still a portfolio project, but I wanted the code structure to reflect realistic engineering decisions rather than only getting the happy path working.
+
+---
+
+## Current Docker status
+
+Current state:
+- PostgreSQL runs in Docker in local development
+
+Planned next step:
+- dockerise the full project so backend, frontend, and database can be run in a more reproducible setup
+
+---
+
+## What I would improve next
+
+- full Docker setup for the complete stack
+- deployment-ready container orchestration
+- stronger separation of training artifacts vs application runtime assets
+- deeper model evaluation reporting
+- richer monitoring/logging around prediction usage
+- optional authentication if the project evolves beyond portfolio use
+
+---
+
+## Portfolio context
+
+This project is hosted as a portfolio piece so employers and reviewers can see the system working as a real application rather than only reading about the model.
+
+It is meant to show:
+- practical data science thinking
+- reusable ML pipeline design
+- backend integration of machine learning
+- relational database awareness
+- API and frontend integration
+- full-stack engineering discipline
+
+---
+
+## Links
+
+- **Live demo:** [ADD LIVE DEMO LINK]
+- **LinkedIn:** [ADD LINKEDIN LINK]
+- **Email:** [ADD YOUR EMAIL]
+
+---
+
+## Author
+
+**Kostiantyn Pereimybida**
+
+---
+
+## Disclaimer
+
+This project is for portfolio and demonstration purposes only.
+
+It is not a medical application and should not be used for diagnosis, treatment, or healthcare decision-making.
