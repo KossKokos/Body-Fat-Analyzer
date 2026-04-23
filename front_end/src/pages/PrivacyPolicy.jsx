@@ -150,7 +150,7 @@ const PrivacyPolicy = () => {
 
         <div className="mt-4 rounded-xl border border-dashed border-gray-300 p-4 bg-gray-50">
           <p className="text-sm text-gray-700">
-            Email: <span className="font-medium">support@example.com</span>
+            Email: <span className="font-medium">Kostiantyn.Pereimybida@outlook.com</span>
           </p>
         </div>
       </section>
