@@ -49,7 +49,7 @@ class Application():
         self.application.add_middleware(APIKeyMiddleware)
 
         if settings.ENVIRONMENT == "production":
-            app.add_middleware(RateLimitMiddleware, calls_per_minute=settings.CALLS_PER_MINUTE)
+            self.application.add_middleware(RateLimitMiddleware, calls_per_minute=settings.CALLS_PER_MINUTE)
 
         self.app_logger.info("Middlewares set up successfully")
 
