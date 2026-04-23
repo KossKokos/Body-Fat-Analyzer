@@ -1,34 +1,142 @@
-back_end/.venv
-back_end/datasets
-__pycache__/
-back_end/.env
-/src
-pre_trained_instances
-history.csv
-datasets
-front_end/node_modules
+# =========================
+# Secrets / environment
+# =========================
+.env
+.env.*
+!.env.example
 
+# Optional local-only secret/config files
+*.local
+*.secret
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Build / packaging
+build/
+dist/
+site/
+.eggs/
+*.egg
+*.egg-info/
+pip-wheel-metadata/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# =========================
 # Logs
-logs
+# =========================
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# =========================
+# Database / local runtime
+# =========================
+*.db
+*.sqlite
+*.sqlite3
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# PID / socket / temp runtime files
+*.pid
+*.pid.lock
+*.sock
+tmp/
+temp/
+
+# =========================
+# Alembic
+# Keep migration scripts committed.
+# Ignore only cache/temp files.
+# =========================
+alembic/__pycache__/
+**/__pycache__/
+
+# =========================
+# FastAPI / app local uploads if any
+# =========================
+uploads/
+media/
+
+# =========================
+# Node / React / Vite
+# =========================
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Frontend build outputs
+dist/
+coverage/
+.vite/
+vite.svg
+
+# TypeScript build info if ever added later
+*.tsbuildinfo
+
+# =========================
+# Docker
+# =========================
+.docker/
+docker-data/
+*.tar
+
+# Docker compose overrides/local files
+docker-compose.override.yml
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+*.iml
+
+# VSCode workspace storage / misc
+.history/
+
+# =========================
+# OS files
+# =========================
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+Desktop.ini
+
+# =========================
+# Misc
+# =========================
+.cache/
+front_end/.env
