@@ -34,16 +34,26 @@ class Application():
         # Setup CORS
         self.app_logger.info("Setting up middlewares")
 
+        # self.application.add_middleware(
+        #     CORSMiddleware,
+        #     allow_origins=settings.ALLOWED_ORIGINS,
+        #     allow_credentials=True,
+        #     allow_methods=settings.ALLOW_METHODS,  
+        #     allow_headers=settings.ALLOW_HEADERS,  
+        #     expose_headers=settings.EXPOSE_HEADERS,
+        #     max_age=settings.MAX_AGE,
+        # )
+        print("ALLOWED_ORIGINS =", settings.ALLOWED_ORIGINS, type(settings.ALLOWED_ORIGINS))
+        print("ALLOW_METHODS =", settings.ALLOW_METHODS, type(settings.ALLOW_METHODS))
+        print("ALLOW_HEADERS =", settings.ALLOW_HEADERS, type(settings.ALLOW_HEADERS))
+
         self.application.add_middleware(
             CORSMiddleware,
-            allow_origins=settings.ALLOWED_ORIGINS,
+            allow_origins=["*"],
             allow_credentials=True,
-            allow_methods=settings.ALLOW_METHODS,  
-            allow_headers=settings.ALLOW_HEADERS,  
-            expose_headers=settings.EXPOSE_HEADERS,
-            max_age=settings.MAX_AGE,
+            allow_methods=["*"],
+            allow_headers=["*"],
         )
-
         # Add security middlewares (order matters)
         self.application.add_middleware(SecurityHeadersMiddleware)
         self.application.add_middleware(APIKeyMiddleware)

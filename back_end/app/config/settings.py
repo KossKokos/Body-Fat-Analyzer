@@ -1,10 +1,11 @@
 import os
+import json
 
 from dotenv import load_dotenv
 from pathlib import Path
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
@@ -113,8 +114,19 @@ class Settings(BaseSettings):
             headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return headers
 
-    APP_HOST: str = ""
-    APP_MAIN: str = ""
-    APP_PORT: str = ""
+    @field_validator(
+        "ALLOWED_ORIGINS",
+        "ALLOW_METHODS",
+        "ALLOW_HEADERS",
+        "EXPOSE_HEADERS",
+        "ALLOWED_HOSTS",
+        "REQUIRED_TABLES",
+        mode="before",
+    )
+    @classmethod
+    def parse_json_list(cls, value):
+        if isinstance(value, str):
+            return json.loads(value)
+        return value
 
 settings = Settings()
