@@ -1,3 +1,11 @@
+import os
+
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("TF_NUM_INTRAOP_THREADS", "1")
+os.environ.setdefault("TF_NUM_INTEROP_THREADS", "1")
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -34,26 +42,20 @@ class Application():
         # Setup CORS
         self.app_logger.info("Setting up middlewares")
 
-        # self.application.add_middleware(
-        #     CORSMiddleware,
-        #     allow_origins=settings.ALLOWED_ORIGINS,
-        #     allow_credentials=True,
-        #     allow_methods=settings.ALLOW_METHODS,  
-        #     allow_headers=settings.ALLOW_HEADERS,  
-        #     expose_headers=settings.EXPOSE_HEADERS,
-        #     max_age=settings.MAX_AGE,
-        # )
+        self.application.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.ALLOWED_ORIGINS,
+            allow_credentials=True,
+            allow_methods=settings.ALLOW_METHODS,  
+            allow_headers=settings.ALLOW_HEADERS,  
+            expose_headers=settings.EXPOSE_HEADERS,
+            max_age=settings.MAX_AGE,
+        )
+        # logging for back_end
         print("ALLOWED_ORIGINS =", settings.ALLOWED_ORIGINS, type(settings.ALLOWED_ORIGINS))
         print("ALLOW_METHODS =", settings.ALLOW_METHODS, type(settings.ALLOW_METHODS))
         print("ALLOW_HEADERS =", settings.ALLOW_HEADERS, type(settings.ALLOW_HEADERS))
 
-        self.application.add_middleware(
-            CORSMiddleware,
-            allow_origins=["*"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
         # Add security middlewares (order matters)
         self.application.add_middleware(SecurityHeadersMiddleware)
         self.application.add_middleware(APIKeyMiddleware)
