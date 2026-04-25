@@ -2,19 +2,21 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from config.settings import settings
-
+from config.logger import logger
 
 def _build_connect_args() -> dict:
     connect_args = {
         "application_name": "fat_predictor_api",
     }
 
-    # For PostgreSQL/psycopg2
     if settings.DB_SSL_MODE and settings.DB_SSL_MODE != "disable":
         connect_args["sslmode"] = settings.DB_SSL_MODE
 
     return connect_args
 
+# Check for temporary startup log
+safe_db_url = settings.SQLALCHEMY_DATABASE_URL.split("@")[-1]
+logger.info(f"Database URL driver check: {settings.SQLALCHEMY_DATABASE_URL.split('://')[0]}://***@{safe_db_url}")
 
 engine = create_engine(
     settings.SQLALCHEMY_DATABASE_URL,
