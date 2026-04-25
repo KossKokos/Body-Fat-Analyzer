@@ -15,21 +15,26 @@ async def predict(
     db: Session = Depends(get_db),
 ):
     try:
+        from sqlalchemy import text
+        db.execute(text("SELECT 1"))
+        db.commit()
+        logger.info("SELECT 1 FROM DB SUCCEEDED")
+        
         user_input = data.model_dump()
         prediction = service.predict_fat_percentage(user_input)
         logger.info("Prediction calculation completed")
 
-
-        # saved_prediction = service.save_prediction_history(
-        #     db=db,
-        #     user_data=user_input,
-        #     result=prediction,
-        # )
+        saved_prediction = service.save_prediction_history(
+            db=db,
+            user_data=user_input,
+            result=prediction,
+        )
     
-        # if saved_prediction is None:
-        #     raise HTTPException(status_code=500, detail="Prediction succeeded but could not be saved")
+        if saved_prediction is None:
+            raise HTTPException(status_code=500, detail="Prediction succeeded but could not be saved")
+        logger.info("Prediction is saved successfully")
 
-        prediction["prediction_id"] = 1#saved_prediction.id
+        prediction["prediction_id"] = saved_prediction.id
 
         logger.info("Building prediction response completed")
         return PredictionResponse(**prediction)
