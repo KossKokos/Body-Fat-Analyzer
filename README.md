@@ -1,4 +1,4 @@
-# Body Fat Percentage Predictor
+# [Body Fat Percentage Predictor](https://body-fat-analyzer.onrender.com/)
 
 A full-stack machine learning project built to take a prediction pipeline beyond model training and turn it into a working application.
 
