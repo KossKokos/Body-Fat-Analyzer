@@ -51,10 +51,6 @@ class Application():
             expose_headers=settings.EXPOSE_HEADERS,
             max_age=settings.MAX_AGE,
         )
-        # logging for back_end
-        print("ALLOWED_ORIGINS =", settings.ALLOWED_ORIGINS, type(settings.ALLOWED_ORIGINS))
-        print("ALLOW_METHODS =", settings.ALLOW_METHODS, type(settings.ALLOW_METHODS))
-        print("ALLOW_HEADERS =", settings.ALLOW_HEADERS, type(settings.ALLOW_HEADERS))
 
         # Add security middlewares (order matters)
         self.application.add_middleware(SecurityHeadersMiddleware)

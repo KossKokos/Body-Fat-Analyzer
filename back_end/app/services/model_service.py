@@ -4,12 +4,9 @@ from pathlib import Path
 
 import keras
 
-
 from ml.loading_script import quantile_loss_lower, quantile_loss_upper
 from utils.logger import log_execution_time, LoggerMixin
 from config.settings import settings
-
-# to inore messages
 
 class ModelService(LoggerMixin):
     """Service for managing ML models."""

@@ -3,7 +3,7 @@ version: "3.9"
 services:
   db:
     image: postgres:16-alpine
-    container_name: fitness_proj_db
+    container_name: body_fat_analyzer_db
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -23,7 +23,7 @@ services:
     build:
       context: ./back_end
       dockerfile: Dockerfile
-    container_name: fitness_proj_backend
+    container_name: body_fat_analyzer-backend
     restart: unless-stopped
     depends_on:
       db:
@@ -89,7 +89,7 @@ services:
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_API_KEY: ${VITE_API_KEY}
-    container_name: fitness_proj_frontend
+    container_name: body_fat_analyzer-frontend
     restart: unless-stopped
     depends_on:
       backend:
