@@ -101,7 +101,7 @@ const ResultDisplay = ({
           }
             className="btn-primary flex-1 py-3"
         >
-          💾 Download Results
+          💾 Download CSV
         </button>
 
         <button
