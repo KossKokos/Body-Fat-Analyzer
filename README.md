@@ -1,8 +1,8 @@
 # [Body Fat Percentage Predictor](https://body-fat-analyzer.onrender.com/)
 
-A full-stack machine learning project built to take a prediction pipeline beyond model training and turn it into a working application.
+A full-stack machine learning portfolio project that takes a trained prediction pipeline and turns it into a working web application.
 
-This project estimates body fat percentage from user-entered health, fitness, and nutrition data. It combines a machine learning pipeline with a FastAPI backend, a PostgreSQL database, and a React frontend, so the result is not just a trained model, but a complete usable system.
+The app estimates body fat percentage from user-entered health, fitness, and nutrition data. It combines a TensorFlow-based prediction pipeline with a FastAPI backend, a PostgreSQL database, and a React frontend.
 
 > **Important note**  
 > This is a portfolio project for demonstration purposes only.  
@@ -13,66 +13,104 @@ This project estimates body fat percentage from user-entered health, fitness, an
 
 ## Quick links
 
+- [Live project](#live-project)
 - [Why I built this project](#why-i-built-this-project)
 - [What this project proves](#what-this-project-proves)
 - [Machine learning approach](#machine-learning-approach)
 - [Tech stack](#tech-stack)
 - [Local setup](#local-setup)
 - [Docker](#docker)
+- [Deployment](#deployment)
+- [Security-minded decisions](#security-minded-decisions)
 - [Portfolio context](#portfolio-context)
+
+---
+
+## Live project
+
+- **Frontend:** https://body-fat-analyzer.onrender.com/
+- **Backend:** hosted as a Docker container on Koyeb
+- **Database:** Neon PostgreSQL
+
+The hosted version uses a split deployment:
+
+```text
+Render Static Site
+  └── React frontend
+        │
+        ▼
+Koyeb Web Service
+  └── FastAPI backend running a Docker image from GitHub Container Registry
+        │
+        ▼
+Neon PostgreSQL
+```
+
+---
 
 ## Why I built this project
 
 I wanted to build something that shows more than just model training in a notebook.
 
-This project was built to reflect the full path from data science work to an actual application:
+This project was built to reflect the full path from data science work to an actual working application:
 
 - working with a real dataset
 - analysing, cleaning, and preparing the data
-- building a reusable ML prediction pipeline
+- building a reusable machine learning prediction pipeline
 - combining classification and regression in one flow
 - integrating trained models into a backend service
 - storing prediction and feedback data in a relational database
 - exposing the functionality through an API
 - building a frontend that lets a user interact with the system
-- thinking about validation, security, persistence, and deployment structure
+- thinking about validation, security, persistence, Docker, and deployment
 
-For me, the value of the project is that it connects machine learning work with backend engineering and product thinking, instead of leaving the model isolated in a notebook.
+For me, the value of this project is that it connects machine learning work with backend engineering and product thinking, instead of leaving the model isolated in a notebook.
 
 ---
 
 ## What this project proves
 
 ### Data science / machine learning
+
 - practical work with structured lifestyle and health-related data
 - dataset reading, analysis, cleaning, and preparation
 - feature handling and reusable pipeline design
 - combining **classification + regression** in one prediction workflow
 - moving from training logic to backend-ready inference logic
+- using trained TensorFlow models inside a running API service
 - thinking beyond experiments toward a deployable ML application
 
 ### Backend and data engineering
+
 - building a prediction API with **FastAPI**
+- loading ML models once at application startup and reusing them for requests
 - integrating trained models into an application service layer
 - designing relational tables for prediction history and user feedback
-- handling schema evolution with **Alembic migrations**
+- handling schema changes with **Alembic migrations**
 - working with **PostgreSQL**
+- using SQLAlchemy for database access
 - implementing validation, error handling, and security-minded API behavior
 
 ### Frontend and full-stack integration
-- separate frontend and backend services
-- form validation and controlled UI flows
-- result rendering and feedback submission
-- handling loading, success, and error states cleanly
-- connecting a React UI to a machine learning backend through an API
 
-### Engineering and deployment awareness
-- environment-based configuration
-- API key handling for protected endpoints
-- separation of concerns across frontend, backend, database, and ML services
-- Docker-based local PostgreSQL setup
-- full containerisation with Docker Compose
-- project structure prepared for cleaner local setup and deployment
+- separate frontend and backend services
+- React form handling and validation
+- prediction result rendering
+- feedback prompt and modal flow
+- loading, success, error, and reset states
+- connecting a React UI to a machine learning backend through API requests
+- clear portfolio/legal pages explaining the project is for demonstration only
+
+### Deployment and DevOps
+
+- local Docker Compose setup for frontend, backend, and PostgreSQL
+- backend Docker image built and pushed to **GitHub Container Registry**
+- backend deployed on **Koyeb** from a pre-built Docker image
+- frontend deployed as a **Render Static Site**
+- database hosted on **Neon PostgreSQL**
+- environment-based configuration for local and hosted environments
+- platform-specific database SSL handling
+- practical debugging of hosted container issues
 
 ---
 
@@ -84,13 +122,13 @@ At a high level:
 
 1. user input is validated and prepared
 2. features are ordered and transformed consistently for inference
-3. a **classifier** predicts a body-fat class (`low`, `mid`, `high`)
+3. a **classifier** predicts a body-fat class: `low`, `mid`, or `high`
 4. the selected class routes the input into a class-specific regression flow
 5. the final prediction is returned through the API
 6. prediction history can be stored in PostgreSQL
 7. optional user feedback can also be stored for future review and possible model improvement
 
-This structure reflects an important part of the project: thinking about ML systems as pipelines that can be reused in a backend environment, not just trained once in a notebook.
+This structure reflects an important part of the project: thinking about ML systems as reusable pipelines that can run inside a backend application, not just inside a notebook.
 
 ---
 
@@ -100,14 +138,14 @@ This structure reflects an important part of the project: thinking about ML syst
 User
   │
   ▼
-React Frontend (Vite / Nginx)
+React Frontend
   │
   │  POST /api/predict/
   │  POST /api/feedback/
   ▼
 FastAPI Backend
   │
-  ├── Input validation / request handling
+  ├── Request validation
   ├── Prediction service
   │     ├── feature preparation
   │     ├── classifier
@@ -126,24 +164,29 @@ FastAPI Backend
 ## Tech stack
 
 ### Data science / model development
+
 - Python
 - pandas
-- numpy
+- NumPy
 - matplotlib
 - seaborn
 - TensorFlow
 - statsmodels
+- scikit-learn
 
 ### Backend
+
 - FastAPI
 - SQLAlchemy
 - PostgreSQL
 - Alembic
-- psycopg2
+- pg8000
 - Pydantic
+- TensorFlow Docker image
 - Docker
 
 ### Frontend
+
 - React
 - JavaScript
 - Vite
@@ -151,7 +194,15 @@ FastAPI Backend
 - Yup
 - Axios
 - Tailwind CSS
-- Nginx (for the containerised frontend build)
+- Nginx for the containerised frontend build
+
+### Deployment
+
+- Render Static Site for the frontend
+- Koyeb Web Service for the backend container
+- GitHub Container Registry for the backend Docker image
+- Neon PostgreSQL for the hosted database
+- Docker Compose for local containerised development
 
 ---
 
@@ -172,7 +223,7 @@ Model training and experimentation are documented in:
 model_training.ipynb
 ```
 
-This notebook covers the model development side of the project, while the application code shows how that work is turned into a reusable full-stack system.
+The notebook covers the data science and model development side of the project. The application code shows how that model work is turned into a reusable full-stack system.
 
 ---
 
@@ -181,18 +232,20 @@ This notebook covers the model development side of the project, while the applic
 - prediction form with validation
 - backend prediction endpoint
 - reusable model loading and inference pipeline
-- prediction result display
 - prediction history persistence
-- optional feedback flow after prediction
-- feedback storage in the database
-- user-facing About, Privacy Policy, and Terms pages
-- clean result download/export
+- feedback submission flow
+- feedback storage in PostgreSQL
+- delayed feedback prompt after prediction
+- star rating inside the feedback form
+- result display and result download
 - new prediction reset flow
 - route-based frontend navigation
+- About, Privacy Policy, and Terms pages
 - API key protected backend routes
 - minimal health check behavior
 - environment-based configuration
-- full Docker Compose setup for frontend, backend, and database
+- local Docker Compose setup
+- hosted split deployment with Render, Koyeb, and Neon
 
 ---
 
@@ -201,40 +254,43 @@ This notebook covers the model development side of the project, while the applic
 ```text
 Fitness_Proj
 ├── .gitignore
+├── README.md
+├── docker-compose.yml
+├── .env.docker.example
+├── model_training.ipynb
+│
 ├── back_end
 │   ├── .env.example
 │   ├── Dockerfile
 │   ├── .dockerignore
-│   ├── app
-│   │   ├── alembic
-│   │   ├── api
-│   │   ├── config
-│   │   ├── core
-│   │   ├── database
-│   │   ├── docker
-│   │   ├── main.py
-│   │   ├── ml
-│   │   ├── models
-│   │   ├── services
-│   │   ├── tests
-│   │   └── utils
-│   └── requirements.txt
-├── front_end
-│   ├── .env.example
-│   ├── Dockerfile
-│   ├── .dockerignore
-│   ├── nginx.conf
-│   ├── public
-│   ├── src
-│   │   ├── api
-│   │   ├── components
-│   │   ├── pages
-│   │   └── utils
-│   ├── package.json
-│   └── vite.config.js
-├── docker-compose.yml
-├── .env.docker.example
-└── model_training.ipynb
+│   ├── requirements.txt
+│   └── app
+│       ├── alembic
+│       ├── api
+│       ├── config
+│       ├── core
+│       ├── database
+│       ├── docker
+│       ├── ml
+│       ├── models
+│       ├── services
+│       ├── tests
+│       ├── utils
+│       └── main.py
+│
+└── front_end
+    ├── .env.example
+    ├── Dockerfile
+    ├── .dockerignore
+    ├── nginx.conf
+    ├── package.json
+    ├── vite.config.js
+    ├── public
+    └── src
+        ├── api
+        ├── components
+        ├── pages
+        └── utils
 ```
 
 ---
@@ -248,35 +304,26 @@ git clone https://github.com/KossKokos/Body-Fat-Analyzer
 cd Fitness_Proj
 ```
 
----
-
-### 2. Backend setup
-
-Move into the backend project:
+### 2. Backend setup without Docker
 
 ```bash
 cd back_end
-```
-
-Create and activate a virtual environment if needed, then install dependencies:
-
-```bash
 pip install -r requirements.txt
 ```
 
-#### Backend environment file
-
-Create a `.env` file in:
+Create a backend environment file:
 
 ```text
 back_end/.env
 ```
 
-You can start from `.env.example`.
+You can start from:
 
-#### Run the backend
+```text
+back_end/.env.example
+```
 
-From `back_end/app`:
+Run the backend from `back_end/app`:
 
 ```bash
 py main.py
@@ -288,76 +335,52 @@ Or from the repository root:
 py back_end/app/main.py
 ```
 
----
-
-### 3. Frontend setup
-
-Move into the frontend project:
+### 3. Frontend setup without Docker
 
 ```bash
 cd front_end
-```
-
-Install dependencies:
-
-```bash
 npm install
+npm run dev
 ```
 
-#### Frontend environment file
-
-Create a `.env` file in:
+Create a frontend environment file:
 
 ```text
 front_end/.env
 ```
 
-You can start from `.env.example`.
+You can start from:
 
-#### Run the frontend
-
-```bash
-npm run dev
+```text
+front_end/.env.example
 ```
-
----
-
-### 4. Database
-
-PostgreSQL can be run through Docker in local development.
 
 ---
 
 ## Docker
 
-The project can also be run as a fully containerised stack using Docker Compose.
+The project can be run locally as a fully containerised stack using Docker Compose.
 
-This setup includes:
+The local Docker setup includes:
 
 - **PostgreSQL** as a dedicated database container
-- **FastAPI** as the backend API and model inference service
+- **FastAPI backend** as the API and model inference service
 - **React frontend** built with Vite and served through **Nginx**
 - **Alembic migrations** applied automatically during backend startup
 
-### Why Docker was added
-
-This project originally worked outside full containerisation. Docker was added to make the application easier to start, easier to share, and closer to a real deployment workflow.
-
-Containerising the stack also helped with:
-
-- keeping the services clearly separated
-- avoiding hidden local dependencies
-- making database setup more consistent
-- running migrations in a predictable way
-- showing deployment awareness as part of the project
-
 ### Container structure
 
-The Docker setup uses three services:
-
-- **db** → PostgreSQL database
-- **backend** → FastAPI application with model loading and Alembic migrations
-- **frontend** → production build of the React app served by Nginx
+```text
+docker-compose.yml
+  ├── db
+  │   └── PostgreSQL 16
+  │
+  ├── backend
+  │   └── FastAPI + TensorFlow + Alembic
+  │
+  └── frontend
+      └── React build served by Nginx
+```
 
 ### Docker environment configuration
 
@@ -367,13 +390,26 @@ Docker uses a dedicated environment file:
 .env.docker
 ```
 
-A safe template version is included in the repository:
+A safe template version is included:
 
 ```text
 .env.docker.example
 ```
 
-Real secret values should be stored only in the local `.env.docker` file and should not be committed.
+Real secret values should stay only in local environment files and should not be committed.
+
+### Local Docker database driver
+
+The backend uses `pg8000` with SQLAlchemy.
+
+For local Docker PostgreSQL, SSL should be disabled:
+
+```env
+DB_SSL_MODE=disable
+SQLALCHEMY_DATABASE_URL=postgresql+pg8000://USER:PASSWORD@db:5432/DB_NAME
+```
+
+Do not add `?sslmode=require` to the local Docker database URL.
 
 ### Run with Docker
 
@@ -383,13 +419,13 @@ From the project root:
 docker compose --env-file .env.docker up --build
 ```
 
-### Default ports
+Default local ports:
 
 - **Frontend:** `http://localhost:8080`
 - **Backend:** `http://localhost:8000`
 - **PostgreSQL:** `localhost:5433`
 
-### Notes about backend startup
+### Backend startup inside Docker
 
 Inside Docker, the backend is not started with the local Windows command:
 
@@ -397,26 +433,82 @@ Inside Docker, the backend is not started with the local Windows command:
 py back_end/app/main.py
 ```
 
-Instead, the container starts the backend using a Linux-friendly runtime command through an entrypoint script. That entrypoint:
+Instead, the backend container uses an entrypoint script that:
 
 1. waits for PostgreSQL to become available
 2. applies Alembic migrations
 3. starts the FastAPI app with Uvicorn
 
-This makes startup more reliable and better suited for containerised environments.
+This makes startup more reliable in containerised environments.
 
-### What Docker adds to the project
+---
 
-Adding Docker to the project shows that the application is not only built and working locally, but can also be packaged into a cleaner and more portable environment.
+## Deployment
 
-From a portfolio point of view, this helps show:
+The final hosted project uses a split deployment.
 
-- deployment awareness
-- container-based service separation
-- reproducible local setup
-- cleaner database handling
-- more realistic full-stack project structure
+```text
+Render Static Site
+  └── React frontend
+        │
+        ▼
+Koyeb Web Service
+  └── FastAPI backend container from GitHub Container Registry
+        │
+        ▼
+Neon PostgreSQL
+```
 
+### Frontend deployment
+
+The frontend is deployed on **Render** as a static site.
+
+The frontend calls the backend through:
+
+```env
+VITE_API_BASE_URL=https://YOUR-KOYEB-BACKEND.koyeb.app
+```
+
+Vite environment variables are build-time values, so the frontend must be redeployed after changing them.
+
+### Backend deployment
+
+The backend is packaged as a Docker image, pushed to **GitHub Container Registry**, and deployed on **Koyeb**.
+
+This approach gives more control over the exact backend image being deployed and avoids differences between local Docker builds and platform-side builds.
+
+Example image format:
+
+```text
+ghcr.io/kosskokos/body-fat-backend:pg8000-v3
+```
+
+Versioned image tags are preferred over relying only on `latest`, because they make it clear exactly which image Koyeb is running.
+
+### Hosted backend environment
+
+On Koyeb, the backend uses:
+
+```env
+DB_SSL_MODE=require
+SQLALCHEMY_DATABASE_URL=postgresql+pg8000://USER:PASSWORD@DIRECT_NEON_HOST:5432/DB_NAME
+```
+
+Do not add `?sslmode=require` to the `pg8000` URL. SSL is handled in the backend through SQLAlchemy `connect_args` when `DB_SSL_MODE=require`.
+
+### Database deployment
+
+The hosted database is **Neon PostgreSQL**.
+
+Important database notes:
+
+- local Docker PostgreSQL uses `DB_SSL_MODE=disable`
+- Neon PostgreSQL uses `DB_SSL_MODE=require`
+- the hosted backend uses the direct Neon host
+- Alembic migrations run during backend startup
+- `pg8000` is used to avoid native PostgreSQL driver issues in the hosted container environment
+
+---
 
 ## Testing
 
@@ -427,40 +519,99 @@ back_end/app/tests/
 ```
 
 Available scripts include:
+
 - `health_test.py`
 - `predict_test.py`
 - `feedback_test.py`
 
-These are lightweight endpoint checks used during development to verify:
+These scripts were used during development to verify:
+
 - health endpoint behavior
+- database health behavior
 - prediction request flow
 - feedback request flow
+- invalid API key behavior
+
+You can also test deployed endpoints directly using PowerShell.
+
+Example health request:
+
+```powershell
+Invoke-WebRequest `
+  -Uri "https://YOUR-BACKEND.koyeb.app/api/health/" `
+  -Method GET `
+  -Headers @{ "X-API-Key" = "YOUR_API_KEY" }
+```
+
+Example database health request:
+
+```powershell
+Invoke-WebRequest `
+  -Uri "https://YOUR-BACKEND.koyeb.app/api/health/db" `
+  -Method GET `
+  -Headers @{ "X-API-Key" = "YOUR_API_KEY" }
+```
 
 ---
 
-## Security-minded decisions in the project
+## Security-minded decisions
 
 This project includes several practical security and application-quality decisions:
 
-- API key checks on backend requests
+- API key checks on backend routes
 - strict request validation with Pydantic
 - controlled backend error responses
 - environment-based configuration instead of hard-coded secrets
+- real secrets excluded from Git
 - minimal health endpoint responses
 - separate frontend and backend services
 - awareness that frontend-exposed API keys are not real security on their own
-- database-backed persistence instead of temporary in-memory-only flows for prediction history and feedback
+- database-backed persistence instead of temporary in-memory-only flows
+- SSL required for the hosted Neon database connection
+- clear user-facing disclaimer that the app is a portfolio project, not a medical product
 
-This is still a portfolio project, but I wanted the code structure to reflect realistic engineering decisions rather than only getting the happy path working.
+This is still a portfolio project, but the structure was built to reflect realistic engineering decisions instead of only making the happy path work.
+
+---
+
+## Environment variables
+
+Real environment files should not be committed.
+
+Useful templates:
+
+```text
+back_end/.env.example
+front_end/.env.example
+.env.docker.example
+```
+
+Important hosted backend values:
+
+```env
+ALLOWED_ORIGINS=["https://body-fat-analyzer.onrender.com"]
+ALLOWED_HOSTS=["YOUR-KOYEB-BACKEND.koyeb.app"]
+
+DB_SSL_MODE=require
+SQLALCHEMY_DATABASE_URL=postgresql+pg8000://USER:PASSWORD@DIRECT_NEON_HOST:5432/DB_NAME
+```
+
+Important local Docker values:
+
+```env
+DB_SSL_MODE=disable
+SQLALCHEMY_DATABASE_URL=postgresql+pg8000://USER:PASSWORD@db:5432/DB_NAME
+```
 
 ---
 
 ## What I would improve next
 
-- stronger separation of training artifacts vs application runtime assets
-- deeper model evaluation reporting
-- richer monitoring/logging around prediction usage
-- optional authentication if the project evolves beyond portfolio use
+- separate training-only assets from runtime backend assets more strictly
+- add deeper model evaluation reporting to the repository
+- add structured monitoring around prediction and feedback usage
+- improve CI checks for backend and frontend builds
+- add optional authentication if the project ever evolves beyond portfolio/demo use
 
 ---
 
@@ -477,12 +628,13 @@ It is meant to show:
 - API and frontend integration
 - full-stack engineering discipline
 - Docker and containerisation awareness
+- practical deployment problem-solving
 
 ---
 
 ## Links
 
-- **Live demo:** [ADD LIVE DEMO LINK]
+- **Live demo:** https://body-fat-analyzer.onrender.com/
 - **LinkedIn:** [ADD LINKEDIN LINK]
 - **Email:** [ADD YOUR EMAIL]
 
