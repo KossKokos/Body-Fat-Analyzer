@@ -1,22 +1,29 @@
+import ssl
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from config.settings import settings
-from config.logger import logger
 
-def _build_connect_args() -> dict:
-    connect_args = {
-        "application_name": "fat_predictor_api",
-    }
 
-    if settings.DB_SSL_MODE and settings.DB_SSL_MODE != "disable":
-        connect_args["sslmode"] = settings.DB_SSL_MODE
+def get_connect_args() -> dict:
+    db_url = settings.SQLALCHEMY_DATABASE_URL
+    db_ssl_mode = str(settings.DB_SSL_MODE).strip().lower()
 
-    return connect_args
+    is_pg8000 = db_url.startswith("postgresql+pg8000://")
+    ssl_required = db_ssl_mode == "require"
 
-# Check for temporary startup log
-safe_db_url = settings.SQLALCHEMY_DATABASE_URL.split("@")[-1]
-logger.info(f"Database URL driver check: {settings.SQLALCHEMY_DATABASE_URL.split('://')[0]}://***@{safe_db_url}")
+    print(f"APP DB_SSL_MODE={db_ssl_mode}", flush=True)
+    print(f"APP DB DRIVER={db_url.split('://', 1)[0]}", flush=True)
+    print(f"APP SSL REQUIRED={ssl_required}", flush=True)
+
+    if is_pg8000 and ssl_required:
+        return {
+            "ssl_context": ssl.create_default_context(),
+        }
+
+    return {}
+
 
 engine = create_engine(
     settings.SQLALCHEMY_DATABASE_URL,
@@ -25,7 +32,7 @@ engine = create_engine(
     max_overflow=settings.DB_MAX_OVERFLOW,
     pool_recycle=settings.DB_POOL_RECYCLE,
     echo=settings.DB_ECHO,
-    connect_args=_build_connect_args(),
+    connect_args=get_connect_args(),
 )
 
 SessionLocal = sessionmaker(

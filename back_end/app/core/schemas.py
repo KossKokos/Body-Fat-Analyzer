@@ -18,17 +18,17 @@ class PredictionRequest(BaseModel):
     resting_bpm: int = Field(ge=30, le=120)
 
     session_duration: float = Field(ge=0.1, le=3.0)
-    calories_burned: float = Field(ge=10, le=5000)
+    calories_burned: int = Field(ge=10, le=5000)
 
     workout_type: Literal["cardio", "hiit", "strength", "yoga"]
     workout_frequency: float = Field(ge=0.0, le=14.0)
     experience_level: int = Field(ge=1, le=3)
 
-    calories: float = Field(ge=500, le=10000)
-    carbs: float = Field(ge=0, le=1500)
-    proteins: float = Field(ge=0, le=500)
-    fats: float = Field(ge=0, le=500)
-    sugar_g: float = Field(ge=0, le=1000)
+    calories: int = Field(ge=500, le=10000)
+    carbs: int = Field(ge=0, le=1500)
+    proteins: int = Field(ge=0, le=500)
+    fats: int = Field(ge=0, le=500)
+    sugar_g: int = Field(ge=0, le=1000)
 
     diet_type: Literal["vegan", "vegetarian", "paleo", "keto", "low-carb", "balanced"]
     daily_meals_frequency: float = Field(ge=1, le=10)
@@ -47,7 +47,7 @@ class PredictionFeedbackCreateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     prediction_id: int = Field(gt=0)
-    rating: float= Field(ge=0, le=10)
+    rating: int = Field(ge=0, le=10)
     is_prediction_close: bool | None = None
     actual_fat_percentage: float | None = Field(default=None, ge=0, le=100)
     comment: str | None = Field(default=None, max_length=2000)

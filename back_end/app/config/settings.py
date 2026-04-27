@@ -5,24 +5,12 @@ from dotenv import load_dotenv
 from pathlib import Path
 from typing import List, Optional
 
-from pydantic import Field, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
 
 env_file = Path(__file__).parent.parent.parent / ".env"
-
-def normalize_database_url(url: str) -> str:
-    if not url:
-        return url
-
-    if url.startswith("postgresql+psycopg2://"):
-        return url.replace("postgresql+psycopg2://", "postgresql+psycopg://", 1)
-
-    if url.startswith("postgresql://"):
-        return url.replace("postgresql://", "postgresql+psycopg://", 1)
-
-    return url
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -39,13 +27,9 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str = ""
 
     SQLALCHEMY_DATABASE_URL: str = ""    
-    @field_validator("SQLALCHEMY_DATABASE_URL", mode="after")
-    @classmethod
-    def validate_database_url(cls, value: str) -> str:
-        return normalize_database_url(value)
     
     # DB ATTRIBUTES
-    DB_SSL_MODE: str = ""
+    DB_SSL_MODE: str = "disable"
     DB_POOL_PRE_PING: bool = True
     DB_POOL_SIZE: int = 5
     DB_MAX_OVERFLOW: int = 10

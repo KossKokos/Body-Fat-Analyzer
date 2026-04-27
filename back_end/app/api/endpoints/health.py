@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from api.dependencies import get_db
 from config.settings import settings
+from config.logger import logger
 
 router = APIRouter(prefix="/health", tags=["health"])
 
@@ -45,8 +46,9 @@ def db_health_check(
 
     except HTTPException:
         raise
-    except SQLAlchemyError:
+    except SQLAlchemyError as exc:
+        print(f"Database health check failed: {repr(exc)}", flush=True)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service unavailable",
-        )
+        ) from exc

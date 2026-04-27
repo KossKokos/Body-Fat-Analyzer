@@ -189,6 +189,52 @@ class PredictionService:
     def _to_fat_class_enum(self, value: str) -> FatClassEnum:
         return FatClassEnum(value)
 
+    def create_row_prediction(self, user_data: Dict[str, Any], result: Dict[str, Any]) -> PredictionHistory:
+        row = PredictionHistory(
+            age=int(user_data["age"]),
+            gender=self._to_gender_enum(user_data["gender"]),
+            weight=user_data["weight"],
+            height=user_data["height"],
+            max_bpm=int(user_data["max_bpm"]),
+            avg_bpm=int(user_data["avg_bpm"]),
+            resting_bpm=int(user_data["resting_bpm"]),
+            session_duration=user_data["session_duration"],
+            calories_burned=int(user_data["calories_burned"]),
+            workout_type=self._to_workout_type_enum(user_data["workout_type"]),
+            workout_frequency=user_data["workout_frequency"],
+            experience_level=user_data["experience_level"],
+            calories=int(user_data["calories"]),
+            carbs=int(user_data["carbs"]),
+            proteins=int(user_data["proteins"]),
+            fats=int(user_data["fats"]),
+            sugar_g=int(user_data["sugar_g"]),
+            diet_type=self._to_diet_type_enum(user_data["diet_type"]),
+            daily_meals_frequency=int(user_data["daily_meals_frequency"]),
+            water_intake=user_data["water_intake"],
+            fat_class=self._to_fat_class_enum(result["fat_class"]),
+            fat_percentage=result["fat_percentage"],
+            model_version=settings.MODEL_VERSION,
+            )
+        return row
+
+    def create_row_feedback(
+            self, 
+            feedback_data: Dict[str, Any], 
+            prediction_id: int,
+            actual_fat_percentage: float | None,
+            consent_to_retrain: bool) -> PredictionFeedback:
+        
+        feedback = PredictionFeedback(
+            prediction_id=prediction_id,
+            rating=int(feedback_data["rating"]),
+            is_prediction_close=feedback_data.get("is_prediction_close"),
+            actual_fat_percentage=actual_fat_percentage,
+            comment=feedback_data.get("comment"),
+            consent_to_retrain=consent_to_retrain,
+            consent_timestamp=datetime.now() if feedback_data.get("consent_to_retrain") else None,
+            )
+        return feedback
+
     def save_prediction_history(
         self,
         db: Session,
@@ -196,31 +242,7 @@ class PredictionService:
         result: Dict[str, Any],
     ) -> PredictionHistory | None:
         try:
-            row = PredictionHistory(
-                age=user_data["age"],
-                gender=self._to_gender_enum(user_data["gender"]),
-                weight=user_data["weight"],
-                height=user_data["height"],
-                max_bpm=user_data["max_bpm"],
-                avg_bpm=user_data["avg_bpm"],
-                resting_bpm=user_data["resting_bpm"],
-                session_duration=user_data["session_duration"],
-                calories_burned=user_data["calories_burned"],
-                workout_type=self._to_workout_type_enum(user_data["workout_type"]),
-                workout_frequency=user_data["workout_frequency"],
-                experience_level=user_data["experience_level"],
-                calories=user_data["calories"],
-                carbs=user_data["carbs"],
-                proteins=user_data["proteins"],
-                fats=user_data["fats"],
-                sugar_g=user_data["sugar_g"],
-                diet_type=self._to_diet_type_enum(user_data["diet_type"]),
-                daily_meals_frequency=int(user_data["daily_meals_frequency"]),
-                water_intake=user_data["water_intake"],
-                fat_class=self._to_fat_class_enum(result["fat_class"]),
-                fat_percentage=result["fat_percentage"],
-                model_version=settings.MODEL_VERSION,
-            )
+            row = self.create_row_prediction(user_data=user_data, result=result)
 
             db.add(row)
             db.commit()
@@ -260,14 +282,11 @@ class PredictionService:
                     "actual_fat_percentage is required when consent_to_retrain is true"
             )
 
-            feedback = PredictionFeedback(
+            feedback = self.create_row_feedback(
+                feedback_data=feedback_data, 
                 prediction_id=prediction_id,
-                rating=feedback_data["rating"],
-                is_prediction_close=feedback_data.get("is_prediction_close"),
-                actual_fat_percentage=actual_fat_percentage,
-                comment=feedback_data.get("comment"),
-                consent_to_retrain=consent_to_retrain,
-                consent_timestamp=datetime.now() if feedback_data.get("consent_to_retrain") else None,
+                actual_fat_percentage=actual_fat_percentage, 
+                consent_to_retrain=consent_to_retrain
             )
 
             db.add(feedback)
