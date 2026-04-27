@@ -53,6 +53,7 @@ const Home = () => {
 
   const handleStarSelect = (stars) => {
     if (feedbackSubmitted) return;
+
     setSelectedStars(stars);
     setShowFeedbackPrompt(false);
     setShowFeedbackForm(true);
@@ -126,12 +127,13 @@ const Home = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+    <div className="mx-auto max-w-6xl">
+      <div className="mb-8 text-center">
+        <h1 className="mb-4 text-3xl font-bold leading-tight text-gray-900 sm:text-4xl">
           🏥 Body Fat Percentage Predictor Portfolio Project
         </h1>
-        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+
+        <p className="mx-auto max-w-3xl text-base text-gray-600 sm:text-lg">
           This is a portfolio project built to demonstrate full-stack
           development, machine learning integration, and frontend/backend
           engineering. It provides estimated body fat predictions based on
@@ -139,7 +141,7 @@ const Home = () => {
         </p>
       </div>
 
-      <div className="border border-blue-200 rounded-xl p-4 mb-8">
+      <div className="mb-8 rounded-xl border border-blue-200 p-4">
         <div className="flex items-start">
           <div className="flex-shrink-0">
             <svg
@@ -156,6 +158,7 @@ const Home = () => {
               />
             </svg>
           </div>
+
           <div className="ml-3">
             <p className="text-sm text-blue-700">
               <strong>Note:</strong> All fields are required for accurate
@@ -168,22 +171,27 @@ const Home = () => {
 
       <div className="mb-12">
         <div className="card mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+          <div className="mb-6 flex items-start justify-between gap-3 sm:items-center">
+            <div className="min-w-0">
+              <h2 className="text-2xl font-bold leading-tight text-gray-900 sm:text-3xl">
                 Complete Health Profile
               </h2>
-              <p className="text-gray-600 mt-1">
+
+              <p className="mt-2 max-w-md text-sm leading-6 text-gray-600 sm:text-base">
                 Fill in all sections below for the most accurate prediction
               </p>
             </div>
-            <span className="text-sm bg-primary-100 text-primary-700 px-3 py-1 rounded-full font-medium">
-              20 metrics • 5 sections
-            </span>
+
+            <div className="shrink-0 rounded-full bg-primary-100 px-3 py-2 text-center text-xs font-semibold leading-tight text-primary-700 sm:px-4 sm:py-2.5 sm:text-sm">
+              <span className="block whitespace-nowrap">20 metrics</span>
+              <span className="block whitespace-nowrap">5 sections</span>
+            </div>
           </div>
+
           <PredictionForm onSubmit={handlePrediction} loading={loading} />
         </div>
       </div>
+
       <PredictionResultsSection
         showResults={showResults}
         loading={loading}

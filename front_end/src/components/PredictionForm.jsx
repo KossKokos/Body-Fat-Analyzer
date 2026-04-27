@@ -1,13 +1,50 @@
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { calculateBMI } from "../utils/formHelpers";
-import { predictionSchema} from "../utils/validation";
+import { predictionSchema } from "../utils/validation";
 import {
   DEFAULT_FORM_VALUES,
   WORKOUT_TYPES,
   DIET_TYPES,
   EXPERIENCE_LEVELS,
 } from "../utils/constants";
+
+const sanitizeNumericInput = (value, allowDecimal = false) => {
+  if (allowDecimal) {
+    const cleanedValue = value.replace(/[^\d.]/g, "");
+    const [integerPart, ...decimalParts] = cleanedValue.split(".");
+
+    return decimalParts.length > 0
+      ? `${integerPart}.${decimalParts.join("")}`
+      : integerPart;
+  }
+
+  return value.replace(/\D/g, "");
+};
+
+const handleNumericKeyDown = (event, allowDecimal = false) => {
+  if (event.ctrlKey || event.metaKey) return;
+
+  const blockedKeys = ["e", "E", "+", "-", " "];
+
+  if (blockedKeys.includes(event.key)) {
+    event.preventDefault();
+    return;
+  }
+
+  if (!allowDecimal && event.key === ".") {
+    event.preventDefault();
+    return;
+  }
+
+  if (
+    allowDecimal &&
+    event.key === "." &&
+    event.currentTarget.value.includes(".")
+  ) {
+    event.preventDefault();
+  }
+};
 
 const PredictionForm = ({ onSubmit, loading }) => {
   const {
@@ -19,6 +56,36 @@ const PredictionForm = ({ onSubmit, loading }) => {
     resolver: yupResolver(predictionSchema),
     defaultValues: DEFAULT_FORM_VALUES,
   });
+
+  const registerNumericField = (
+    fieldName,
+    { allowDecimal = false, asNumber = true } = {}
+  ) => {
+    const registeredField = register(
+      fieldName,
+      asNumber
+        ? {
+            setValueAs: (value) => (value === "" ? "" : Number(value)),
+          }
+        : undefined
+    );
+
+    return {
+      ...registeredField,
+      type: "text",
+      inputMode: allowDecimal ? "decimal" : "numeric",
+      pattern: allowDecimal ? "[0-9]*[.]?[0-9]*" : "[0-9]*",
+      onKeyDown: (event) => handleNumericKeyDown(event, allowDecimal),
+      onChange: (event) => {
+        event.target.value = sanitizeNumericInput(
+          event.target.value,
+          allowDecimal
+        );
+
+        registeredField.onChange(event);
+      },
+    };
+  };
 
   const weight = watch("weight");
   const height = watch("height");
@@ -36,14 +103,12 @@ const PredictionForm = ({ onSubmit, loading }) => {
         <h3 className="text-xl font-bold text-gray-900 mb-6 border-b pb-3">
           📋 Personal Information
         </h3>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="label">Age (years)</label>
             <input
-              type="number"
-              {...register("age", {
-                setValueAs: (value) => (value === "" ? "" : Number(value)),
-              })}
+              {...registerNumericField("age")}
               className="input-field"
               placeholder="e.g., 30"
             />
@@ -63,11 +128,7 @@ const PredictionForm = ({ onSubmit, loading }) => {
           <div>
             <label className="label">Weight (kg)</label>
             <input
-              type="number"
-              step="0.1"
-              {...register("weight", {
-                setValueAs: (value) => (value === "" ? "" : Number(value)),
-              })}
+              {...registerNumericField("weight", { allowDecimal: true })}
               className="input-field"
               placeholder="e.g., 70.5"
             />
@@ -81,11 +142,7 @@ const PredictionForm = ({ onSubmit, loading }) => {
           <div>
             <label className="label">Height (m)</label>
             <input
-              type="number"
-              step="0.01"
-              {...register("height", {
-                setValueAs: (value) => (value === "" ? "" : Number(value)),
-              })}
+              {...registerNumericField("height", { allowDecimal: true })}
               className="input-field"
               placeholder="e.g., 1.75"
             />
@@ -97,7 +154,6 @@ const PredictionForm = ({ onSubmit, loading }) => {
           </div>
         </div>
 
-        {/* BMI Display */}
         {bmi && (
           <div className="mt-4 p-3 bg-gray-50 rounded-lg">
             <p className="text-gray-700 text-sm">
@@ -123,14 +179,12 @@ const PredictionForm = ({ onSubmit, loading }) => {
         <h3 className="text-xl font-bold text-gray-900 mb-6 border-b pb-3">
           ❤️ Heart Rate Metrics
         </h3>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="label">Max Heart Rate (BPM)</label>
             <input
-              type="number"
-              {...register("max_bpm", {
-                setValueAs: (value) => (value === "" ? "" : Number(value)),
-              })}
+              {...registerNumericField("max_bpm")}
               className="input-field"
               placeholder="e.g., 185"
             />
@@ -144,10 +198,7 @@ const PredictionForm = ({ onSubmit, loading }) => {
           <div>
             <label className="label">Avg Workout BPM</label>
             <input
-              type="number"
-              {...register("avg_bpm", {
-                setValueAs: (value) => (value === "" ? "" : Number(value)),
-              })}
+              {...registerNumericField("avg_bpm")}
               className="input-field"
               placeholder="e.g., 140"
             />
@@ -161,10 +212,7 @@ const PredictionForm = ({ onSubmit, loading }) => {
           <div>
             <label className="label">Resting BPM</label>
             <input
-              type="number"
-              {...register("resting_bpm", {
-                setValueAs: (value) => (value === "" ? "" : Number(value)),
-              })}
+              {...registerNumericField("resting_bpm")}
               className="input-field"
               placeholder="e.g., 65"
             />
@@ -182,14 +230,13 @@ const PredictionForm = ({ onSubmit, loading }) => {
         <h3 className="text-xl font-bold text-gray-900 mb-6 border-b pb-3">
           🏋️ Training Information
         </h3>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="label">Session Duration (hours)</label>
             <input
-              type="number"
-              step="0.1"
-              {...register("session_duration", {
-                setValueAs: (value) => (value === "" ? "" : Number(value)),
+              {...registerNumericField("session_duration", {
+                allowDecimal: true,
               })}
               className="input-field"
               placeholder="e.g., 1.5"
@@ -204,10 +251,7 @@ const PredictionForm = ({ onSubmit, loading }) => {
           <div>
             <label className="label">Calories Burned</label>
             <input
-              type="number"
-              {...register("calories_burned", {
-                setValueAs: (value) => (value === "" ? "" : Number(value)),
-              })}
+              {...registerNumericField("calories_burned")}
               className="input-field"
               placeholder="e.g., 500"
             />
@@ -232,9 +276,10 @@ const PredictionForm = ({ onSubmit, loading }) => {
           <div>
             <label className="label">Workouts per Week</label>
             <input
-              type="text"
-              inputMode="decimal"
-              {...register("workout_frequency")}
+              {...registerNumericField("workout_frequency", {
+                allowDecimal: true,
+                asNumber: false,
+              })}
               className="input-field"
               placeholder="e.g., 3.5"
             />
@@ -263,14 +308,12 @@ const PredictionForm = ({ onSubmit, loading }) => {
         <h3 className="text-xl font-bold text-gray-900 mb-6 border-b pb-3">
           🍎 Nutrition Information
         </h3>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="label">Daily Calories</label>
             <input
-              type="number"
-              {...register("calories", {
-                setValueAs: (value) => (value === "" ? "" : Number(value)),
-              })}
+              {...registerNumericField("calories")}
               className="input-field"
               placeholder="e.g., 2000"
             />
@@ -284,9 +327,10 @@ const PredictionForm = ({ onSubmit, loading }) => {
           <div>
             <label className="label">Carbs (g)</label>
             <input
-              type="text"
-              inputMode="decimal"
-              {...register('carbs')}
+              {...registerNumericField("carbs", {
+                allowDecimal: true,
+                asNumber: false,
+              })}
               className="input-field"
               placeholder="e.g., 250"
             />
@@ -300,9 +344,10 @@ const PredictionForm = ({ onSubmit, loading }) => {
           <div>
             <label className="label">Protein (g)</label>
             <input
-              type="text"
-              inputMode="decimal"
-              {...register('proteins')}
+              {...registerNumericField("proteins", {
+                allowDecimal: true,
+                asNumber: false,
+              })}
               className="input-field"
               placeholder="e.g., 120"
             />
@@ -316,9 +361,10 @@ const PredictionForm = ({ onSubmit, loading }) => {
           <div>
             <label className="label">Fat (g)</label>
             <input
-              type="text"
-              inputMode="decimal"
-              {...register('fats')}
+              {...registerNumericField("fats", {
+                allowDecimal: true,
+                asNumber: false,
+              })}
               className="input-field"
               placeholder="e.g., 70"
             />
@@ -330,9 +376,10 @@ const PredictionForm = ({ onSubmit, loading }) => {
           <div>
             <label className="label">Sugar (g)</label>
             <input
-              type="text"
-              inputMode="decimal"
-              {...register('sugar_g')}
+              {...registerNumericField("sugar_g", {
+                allowDecimal: true,
+                asNumber: false,
+              })}
               className="input-field"
               placeholder="e.g., 50"
             />
@@ -357,9 +404,9 @@ const PredictionForm = ({ onSubmit, loading }) => {
           <div>
             <label className="label">Meals per Day</label>
             <input
-              type="text"
-              inputMode="decimal"
-              {...register("daily_meals_frequency")}
+              {...registerNumericField("daily_meals_frequency", {
+                asNumber: false,
+              })}
               className="input-field"
               placeholder="e.g., 3"
             />
@@ -373,9 +420,10 @@ const PredictionForm = ({ onSubmit, loading }) => {
           <div>
             <label className="label">Water (liters)</label>
             <input
-              type="text"
-              inputMode="decimal"
-              {...register("water_intake")}
+              {...registerNumericField("water_intake", {
+                allowDecimal: true,
+                asNumber: false,
+              })}
               className="input-field"
               placeholder="e.g., 2.5"
             />
@@ -387,10 +435,9 @@ const PredictionForm = ({ onSubmit, loading }) => {
           </div>
         </div>
 
-        {/* Calorie Balance Display */}
         {calorieBalance !== null && (
           <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-blue-50 to-gray-50 border">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h4 className="font-semibold text-gray-900">
                   Calorie Analysis
@@ -408,13 +455,15 @@ const PredictionForm = ({ onSubmit, loading }) => {
                   {Math.abs(calorieBalance).toFixed(0)} calories
                 </p>
               </div>
-              <div className="text-right">
+
+              <div className="text-left sm:text-right">
                 <p className="text-xs text-gray-500">Intake: {calories} cal</p>
                 <p className="text-xs text-gray-500">
                   Burned: {caloriesBurned} cal
                 </p>
               </div>
             </div>
+
             <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full ${
@@ -429,21 +478,21 @@ const PredictionForm = ({ onSubmit, loading }) => {
                   marginLeft: calorieBalance > 0 ? "0" : "auto",
                   marginRight: calorieBalance > 0 ? "auto" : "0",
                 }}
-              ></div>
+              />
             </div>
           </div>
         )}
       </div>
 
       {/* Submit Section */}
-      <div className="sticky bottom-6 z-10">
-        <div className="bg-white rounded-xl shadow-2xl border border-gray-200 p-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="sticky bottom-3 z-10 sm:bottom-6">
+        <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-xl sm:p-6 sm:shadow-2xl">
+          <div className="flex flex-col items-stretch justify-between gap-3 md:flex-row md:items-center md:gap-4">
             <div>
-              <h4 className="text-lg font-bold text-gray-900">
+              <h4 className="text-base font-bold text-gray-900 sm:text-lg">
                 Ready for Analysis?
               </h4>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs text-gray-600 sm:text-sm">
                 Click below to process all 20+ metrics through our AI model
               </p>
             </div>
@@ -451,12 +500,14 @@ const PredictionForm = ({ onSubmit, loading }) => {
             <button
               type="submit"
               disabled={loading}
-              className={`btn-primary px-8 py-3 text-lg min-w-[200px] ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
+              className={`btn-primary min-h-11 w-full px-4 py-2.5 text-sm sm:w-auto sm:min-w-[200px] sm:px-8 sm:py-3 sm:text-lg ${
+                loading ? "opacity-70 cursor-not-allowed" : ""
+              }`}
             >
               {loading ? (
                 <span className="flex items-center justify-center">
                   <svg
-                    className="animate-spin h-6 w-6 mr-3 text-white"
+                    className="mr-2 h-5 w-5 animate-spin text-white sm:mr-3 sm:h-6 sm:w-6"
                     fill="none"
                     viewBox="0 0 24 24"
                   >
@@ -477,9 +528,7 @@ const PredictionForm = ({ onSubmit, loading }) => {
                   Processing...
                 </span>
               ) : (
-                <>
-                  🔬 Predict Body Fat
-                </>
+                <>🔬 Predict Body Fat</>
               )}
             </button>
           </div>
