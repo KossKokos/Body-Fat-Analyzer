@@ -59,6 +59,39 @@ ENCODED_FEATURES: tuple[str, ...] = (
     "diet_type_vegetarian",
 )
 
+ENGINEERED_FEATURES: tuple[str, ...] = (
+    "hrr",
+    "intensity_ratio",
+    "hrr_per_age",
+    "weekly_training_minutes",
+    "weekly_training_hours",
+    "calories_per_training_hour",
+    "calories_per_minute",
+    "calories_per_kg",
+    "bmi_x_age",
+    "bmi_x_training_hours",
+    "protein_ratio",
+    "carb_ratio",
+    "fat_ratio",
+    "sugar_per_calorie",
+    "calories_per_meal",
+    "high_intensity_workout",
+    "strength_vs_cardio",
+    "intensity_weighted_training_hours",
+    "low_carb_diet",
+    "plant_based_diet",
+    "female_x_bmi",
+    "male_x_bmi",
+    "log1p_calories_burned",
+    "log1p_weekly_training_hours",
+    "log1p_calories_per_training_hour",
+    "log1p_calories_per_kg",
+    "log1p_calories",
+)
+
+# The final model bundle was trained with these 57 columns in this exact order.
+MODEL_FEATURES: tuple[str, ...] = ENCODED_FEATURES + ENGINEERED_FEATURES
+
 FAT_CLASS_MAP: dict[int, str] = {
     0: "low",
     1: "mid",

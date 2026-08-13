@@ -83,22 +83,46 @@ class Settings(BaseSettings):
     MODELS_DIR: Path = BASE_DIR / "app" / "models"
     DATA_DIR: Path = BASE_DIR / "data"
 
-    CLASSIFIER_PATH: Path = MODELS_DIR / "classifiers" / "fat_percentage_classifier_v1.keras"
+    CLASSIFIER_PATH: Path = (
+        MODELS_DIR
+        / "classifiers"
+        / "fat_percentage_ordinal_classifier_final.keras"
+    )
     REGRESSOR_PATHS: dict = {
-        "low": MODELS_DIR / "regressors" / "low_fat_residuals_regressor_v1.keras",
-        "mid": MODELS_DIR / "regressors" / "mid_fat_residuals_regressor_v1.keras",
-        "high": MODELS_DIR / "regressors" / "high_fat_residuals_regressor_v1.keras",
+        "low": (
+            MODELS_DIR
+            / "regressors"
+            / "low_fat_residuals_regressor_final.keras"
+        ),
+        "mid": (
+            MODELS_DIR
+            / "regressors"
+            / "mid_fat_boundary_weighted_residuals_regressor_final.keras"
+        ),
+        "high": (
+            MODELS_DIR
+            / "regressors"
+            / "high_fat_residuals_regressor_final.keras"
+        ),
     }
     BASE_MODELS_PATHS: dict = {
-        "low": MODELS_DIR / "base_models" / "low_fat_base_model.pkl",
-        "mid": MODELS_DIR / "base_models" / "mid_fat_base_model.pkl",
-        "high": MODELS_DIR / "base_models" / "high_fat_base_model.pkl",
+        "low": (
+            MODELS_DIR / "base_models" / "low_fat_base_model_final.pkl"
+        ),
+        "mid": (
+            MODELS_DIR / "base_models" / "mid_fat_base_model_final.pkl"
+        ),
+        "high": (
+            MODELS_DIR / "base_models" / "high_fat_base_model_final.pkl"
+        ),
     }
     SCALERS_PATHS: dict = {
-        "class": MODELS_DIR / "scalers" / "classification_scaler.pkl",
-        "low": MODELS_DIR / "scalers" / "low_fat_scaler.pkl",
-        "mid": MODELS_DIR / "scalers" / "mid_fat_scaler.pkl",
-        "high": MODELS_DIR / "scalers" / "high_fat_scaler.pkl",
+        "class": (
+            MODELS_DIR / "scalers" / "classification_scaler_final.pkl"
+        ),
+        "low": MODELS_DIR / "scalers" / "low_fat_scaler_final.pkl",
+        "mid": MODELS_DIR / "scalers" / "mid_fat_scaler_final.pkl",
+        "high": MODELS_DIR / "scalers" / "high_fat_scaler_final.pkl",
     }
 
     @property

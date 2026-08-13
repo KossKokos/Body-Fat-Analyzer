@@ -17,6 +17,7 @@ The app estimates body fat percentage from user-entered health, fitness, and nut
 - [Why I built this project](#why-i-built-this-project)
 - [What this project proves](#what-this-project-proves)
 - [Machine learning approach](#machine-learning-approach)
+- [Evaluation results](#evaluation-results)
 - [Tech stack](#tech-stack)
 - [Local setup](#local-setup)
 - [Docker](#docker)
@@ -130,6 +131,97 @@ At a high level:
 
 This structure reflects an important part of the project: thinking about ML systems as reusable pipelines that can run inside a backend application, not just inside a notebook.
 
+### Final model pipeline
+
+The backend uses one final artifact bundle trained in
+`loading_script.ipynb`. Its ordinal classifier respects the ordered
+`low` → `mid` → `high` classes, while boundary weighting gives difficult
+examples near the class thresholds more influence during training. The
+selected class routes each prediction to its final class-specific base model
+and residual regressor; the mid-fat regressor receives additional boundary
+weighting.
+
+Inference reindexes encoded and engineered inputs into the exact 57-feature
+training contract. The request and response API remains unchanged.
+
+The final artifacts use a newer Keras serialization format. If the installed
+runtime cannot deserialize that format directly, the compatibility loader
+reconstructs the same final architectures and loads their saved weights.
+
+
+### Evaluation results
+
+Final evaluation was produced by `loading_script.ipynb`.
+The final test protocol uses one shared holdout cohort for every metric:
+
+- source dataset: `back_end/app/ml/Final_data.csv`
+- complete dataset size: 20,000 records
+- development cohort: 18,000 records
+- shared final test cohort: 2,000 records
+- class thresholds learned from development data only: `low < 23.5562`, `23.5562 <= mid <= 28.1110`, `high > 28.1110`
+- final feature contract after encoding and feature engineering: 57 features
+
+Final test class distribution:
+
+| Class | Development rows | Final test rows |
+|---|---:|---:|
+| Low | 5,940 | 648 |
+| Mid | 5,940 | 661 |
+| High | 6,120 | 691 |
+
+Final holdout performance:
+
+| Model | Metric | Score | Unit | Test rows |
+|---|---|---:|---|---:|
+| Ordinal classifier | Accuracy | 0.7890 | proportion correct | 2,000 |
+| Low-fat hybrid regressor | MAE | 1.5689 | body-fat percentage points | 648 |
+| Mid-fat hybrid regressor | MAE | 0.9421 | body-fat percentage points | 661 |
+| High-fat hybrid regressor | MAE | 1.2676 | body-fat percentage points | 691 |
+| Complete classifier-routed pipeline | MAE | 1.8287 | body-fat percentage points | 2,000 |
+
+Classifier detail on the shared final test cohort:
+
+| Class | Precision | Recall | F1 | Support |
+|---|---:|---:|---:|---:|
+| Low | 0.8622 | 0.7824 | 0.8204 | 648 |
+| Mid | 0.6554 | 0.7655 | 0.7062 | 661 |
+| High | 0.8828 | 0.8177 | 0.8490 | 691 |
+
+Classifier confusion matrix:
+
+| Actual / Predicted | Low | Mid | High |
+|---|---:|---:|---:|
+| Low | 507 | 140 | 1 |
+| Mid | 81 | 506 | 74 |
+| High | 0 | 126 | 565 |
+
+The classifier is an ordinal neural network, not a flat softmax classifier.
+It predicts ordered cumulative class-boundary probabilities for
+`low -> mid -> high`. Training uses balanced class weights plus additional
+boundary weighting around the learned low/mid and mid/high thresholds.
+
+Classifier training split:
+
+| Split | Rows |
+|---|---:|
+| Train | 16,200 |
+| Validation | 1,800 |
+| Shared final test | 2,000 |
+
+The regressor branch is a hybrid setup for each class: a Lasso base model
+predicts the class-specific body-fat percentage, then a neural residual
+regressor corrects the base prediction. The low and high residual models use
+quantile losses, while the mid-fat residual model uses Huber loss with extra
+boundary weighting.
+
+Regressor training split:
+
+| Class | Train rows | Validation rows | Shared final test rows |
+|---|---:|---:|---:|
+| Low | 5,346 | 594 | 648 |
+| Mid | 5,346 | 594 | 661 |
+| High | 5,508 | 612 | 691 |
+
 ---
 
 ## Architecture overview
@@ -220,7 +312,7 @@ https://www.kaggle.com/datasets/jockeroika/life-style-data
 Model training and experimentation are documented in:
 
 ```text
-model_training.ipynb
+loading_script.ipynb
 ```
 
 The notebook covers the data science and model development side of the project. The application code shows how that model work is turned into a reusable full-stack system.
@@ -257,7 +349,7 @@ Fitness_Proj
 ├── README.md
 ├── docker-compose.yml
 ├── .env.docker.example
-├── model_training.ipynb
+├── loading_script.ipynb
 │
 ├── back_end
 │   ├── .env.example
@@ -523,6 +615,8 @@ Available scripts include:
 - `health_test.py`
 - `predict_test.py`
 - `feedback_test.py`
+- `test_model_pipeline_contracts.py`
+- `test_model_artifact_smoke.py`
 
 These scripts were used during development to verify:
 
@@ -531,6 +625,15 @@ These scripts were used during development to verify:
 - prediction request flow
 - feedback request flow
 - invalid API key behavior
+
+The model contract tests run without loading the heavy artifacts. To load the
+final artifact bundle and make a real pipeline prediction:
+
+```powershell
+cd back_end/app
+$env:RUN_MODEL_ARTIFACT_SMOKE="1"
+..\.venv\Scripts\python.exe -m unittest tests.test_model_artifact_smoke -v
+```
 
 You can also test deployed endpoints directly using PowerShell.
 

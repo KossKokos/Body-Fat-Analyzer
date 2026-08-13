@@ -49,6 +49,9 @@ pip-wheel-metadata/
 # Jupyter
 .ipynb_checkpoints/
 
+# Local legacy training source (canonical training lives in loading_script.ipynb)
+/back_end/app/ml/loading_script_legacy.py
+model_evaluation_evidence/
 # =========================
 # Logs
 # =========================

@@ -18,5 +18,4 @@ env/
 .gitignore
 
 app/ml/Final_data.csv
-app/mp/loading_script.py
-app/models/regressors/test.py
+app/ml/loading_script_legacy.py

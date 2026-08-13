@@ -4,7 +4,8 @@ from pathlib import Path
 
 import keras
 
-from ml.loading_script import quantile_loss_lower, quantile_loss_upper
+from ml.ordinal_classifier import OrderedCumulativeProbabilities
+from ml.model_compat import load_final_keras_model
 from utils.logger import log_execution_time, LoggerMixin
 from config.settings import settings
 
@@ -13,32 +14,78 @@ class ModelService(LoggerMixin):
     
     _instance = None
     models: Dict[str, keras.Sequential | Any] = {}
-    __map_objs = {
-            'low': {'quantile_loss' : quantile_loss_lower},
-            'high': {'quantile_loss': quantile_loss_upper}
-    }
     
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(ModelService, cls).__new__(cls)
         return cls._instance
 
-    def _get_custom_object(self, type_):
-        return self.__map_objs[type_]
-
     def load_keras_model(self, filepath: Path | str) -> keras.Sequential:
-        """Safe way to load Keras model with pickle"""
+        """Load one final inference-only Keras model."""
+
+        # Keras 3.15 added Dense serialization fields that the project's
+        # existing Keras 3.12 runtime cannot read. Use the exact architecture
+        # builders directly on older runtimes and load the original weights.
+        if (
+            tuple(
+                int(part)
+                for part in keras.__version__.split(".")[:2]
+            ) < (3, 15)
+        ):
+            try:
+                model = load_final_keras_model(filepath)
+                self.logger.info(
+                    "Loaded model through the Keras compatibility path",
+                    path=str(filepath),
+                    keras_version=keras.__version__,
+                )
+                return model  # type: ignore
+            except Exception as compatibility_error:
+                self.logger.exception(
+                    "Failed to load Keras instance",
+                    error=str(compatibility_error),
+                    path=str(filepath),
+                )
+                raise
         
         try: 
-            model = keras.models.load_model(filepath=filepath)
-            return model # type: ignore
-        except Exception as e:
-            self.logger.exception(
-                "Failed to load keras instance",
-                error=str(e),
-                path=str(filepath)
+            model = keras.models.load_model(
+                filepath=filepath,
+                custom_objects={
+                    "OrderedCumulativeProbabilities": (
+                        OrderedCumulativeProbabilities
+                    ),
+                    (
+                        "BodyFat>"
+                        "ordered_cumulative_probabilities_final"
+                    ): OrderedCumulativeProbabilities,
+                    # Compatibility with the already-trained final artifact.
+                    (
+                        "BodyFat>"
+                        "ordered_cumulative_probabilities_v1"
+                    ): OrderedCumulativeProbabilities,
+                },
+                compile=False,
             )
-            raise
+            return model # type: ignore
+        except Exception as direct_error:
+            try:
+                model = load_final_keras_model(filepath)
+                self.logger.warning(
+                    "Loaded weights through the Keras compatibility path",
+                    path=str(filepath),
+                    keras_version=keras.__version__,
+                    direct_load_error=str(direct_error).splitlines()[-1],
+                )
+                return model  # type: ignore
+            except Exception as compatibility_error:
+                self.logger.exception(
+                    "Failed to load Keras instance",
+                    error=str(compatibility_error),
+                    direct_load_error=str(direct_error).splitlines()[-1],
+                    path=str(filepath),
+                )
+                raise compatibility_error from direct_error
 
     def load_instance_pkl(self, filename: str | Path):
         with open(filename, 'rb') as f:
@@ -49,6 +96,9 @@ class ModelService(LoggerMixin):
     def load_models(cls):
         """Load all ML models."""
         instance = cls()
+
+        # Clear an existing singleton before an application or test reload.
+        instance.models.clear()
         
         with log_execution_time("loading_classifier", level="info"):
             instance._load_classifier()
@@ -64,6 +114,7 @@ class ModelService(LoggerMixin):
         
         instance.logger.info(
             "All models loaded successfully",
+            model_version=instance.get_model_audit_version(),
             classifier_loaded="classifier" in instance.models,
             regressors_loaded=list(instance.models.get("regressors", {}).keys()),
             base_models_loaded=list(instance.models.get("base_models", {}).keys())
@@ -183,6 +234,11 @@ class ModelService(LoggerMixin):
                 error=str(e),
                 )
             raise
+
+    def get_model_audit_version(self) -> str:
+        """Version label persisted with prediction history rows."""
+
+        return settings.MODEL_VERSION
 
     def get_classification_scaler(self):
         self.logger.debug(

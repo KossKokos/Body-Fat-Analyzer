@@ -8,9 +8,9 @@ from sqlalchemy.orm import Session
 
 from .model_service import ModelService
 from config.logger import logger
-from config.settings import settings
 from config import constants as cnsts
-from ml.loading_script import add_engineered_features
+from ml.feature_engineering import add_engineered_features
+from ml.ordinal_classifier import decode_ordinal_predictions
 from database.models import (
     PredictionHistory,
     PredictionFeedback,
@@ -50,11 +50,6 @@ class PredictionService:
         X = pd.DataFrame([data], columns=columns)
         return X
 
-    def _fill_missing_fields(self, df: pd.DataFrame) -> None:
-        for feature in cnsts.ENCODED_FEATURES:
-            if feature not in df.columns:
-                df[feature] = 0.0
-
     def _encode_cat_features(self, df: pd.DataFrame) -> pd.DataFrame:
         df_encoded = pd.get_dummies(data=df)
         return df_encoded
@@ -74,11 +69,24 @@ class PredictionService:
 
     def _preprocess_features(self, data: pd.DataFrame) -> pd.DataFrame:
         df = copy.deepcopy(data)
-        # encode categorical features
         df_encoded = self._encode_cat_features(df=df)
-        self._fill_missing_fields(df=df_encoded)
-        # add engineered features
+        df_encoded = df_encoded.rename(
+            columns=lambda feature: str(feature).lower()
+        )
+
+        # get_dummies only emits the categories present in this request.
+        df_encoded = df_encoded.reindex(
+            columns=cnsts.ENCODED_FEATURES,
+            fill_value=0.0,
+        ).astype("float64")
+
         df_fe = add_engineered_features(df=df_encoded)
+        df_fe = df_fe.reindex(columns=cnsts.MODEL_FEATURES)
+
+        if not np.isfinite(df_fe.to_numpy(dtype=float)).all():
+            raise ValueError(
+                "Preprocessed model features contain non-finite values."
+            )
         return df_fe
     
     def _scale_features(self, X: pd.DataFrame, scaler) -> np.ndarray:
@@ -93,6 +101,15 @@ class PredictionService:
     
     def _get_fat_class_name(self, fat_class: int) -> str:
         return cnsts.FAT_CLASS_MAP[fat_class]
+
+    def _decode_classifier_prediction(
+        self,
+        predictions,
+    ) -> int:
+        """Decode the final classifier's two ordinal probabilities."""
+
+        decoded = decode_ordinal_predictions(predictions)
+        return int(decoded[0])
 
     def _normalize_fat_percentage(self, fat_percentage: float) -> float:
         """
@@ -126,8 +143,12 @@ class PredictionService:
 
             # Step 4: Classify
             classifier = self.model_service.get_classifier()
-            fat_class_softmax = classifier.predict(classification_features)
-            fat_class_int = np.argmax(fat_class_softmax).item()
+            classifier_predictions = classifier.predict(
+                classification_features
+            )
+            fat_class_int = self._decode_classifier_prediction(
+                classifier_predictions,
+            )
             fat_class = self._get_fat_class_name(fat_class=fat_class_int)
 
             # Step 5: Scale features for regression
@@ -213,7 +234,7 @@ class PredictionService:
             water_intake=user_data["water_intake"],
             fat_class=self._to_fat_class_enum(result["fat_class"]),
             fat_percentage=result["fat_percentage"],
-            model_version=settings.MODEL_VERSION,
+            model_version=self.model_service.get_model_audit_version(),
             )
         return row
 
